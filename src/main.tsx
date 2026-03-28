@@ -4,14 +4,18 @@ import { BrowserRouter } from "react-router-dom"
 
 import { Toaster } from "@/components/ui/sonner"
 
+import { AuthRoleProvider } from "@/context/AuthRoleContext"
+
 import App from "./App.tsx"
 import "./index.css"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
-      <Toaster position="top-center" richColors closeButton />
+      <AuthRoleProvider>
+        <App />
+        <Toaster position="top-center" richColors closeButton />
+      </AuthRoleProvider>
     </BrowserRouter>
   </StrictMode>,
 )

@@ -2,9 +2,10 @@ import { Link, useParams } from "react-router-dom"
 import { motion } from "framer-motion"
 import { ArrowLeft, ShieldAlert, AlertCircle, LayoutGrid, BedDouble } from "lucide-react"
 
-import { useRealtimeBeds } from "@/hooks/useRealtimeBeds"
 import { ReadOnlyBedGrid } from "@/components/admin/ReadOnlyBedGrid"
+import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard"
 import { Button } from "@/components/ui/button"
+import { useRealtimeBeds } from "@/hooks/useRealtimeBeds"
 
 export function AdminWardDetailPage() {
   const { id } = useParams()
@@ -80,9 +81,12 @@ export function AdminWardDetailPage() {
                 initial={{ opacity: 0, scale: 0.99 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4 }}
-                className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-sm shadow-slate-100/50"
               >
-                <ReadOnlyBedGrid beds={beds} />
+                <AnimatedBorderCard radius="3xl" innerClassName="p-0">
+                  <div className="p-6 sm:p-8">
+                    <ReadOnlyBedGrid beds={beds} />
+                  </div>
+                </AnimatedBorderCard>
               </motion.div>
             </>
           )}

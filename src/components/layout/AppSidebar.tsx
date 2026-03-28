@@ -1,41 +1,16 @@
 import { motion, useReducedMotion } from "framer-motion"
-import {
-  Activity,
-  BedDouble,
-  Bell,
-  LayoutDashboard,
-  Settings,
-  Shield,
-  TrendingUp,
-  UserRoundPlus,
-  type LucideIcon,
-} from "lucide-react"
+import { Activity, LogOut } from "lucide-react"
 import { NavLink } from "react-router-dom"
 
+import { Button } from "@/components/ui/button"
+import { useAuthRole } from "@/context/AuthRoleContext"
+import { sidebarNavForRole } from "@/lib/role-sidebar"
 import { cn } from "@/lib/utils"
-
-const NAV: {
-  to: string
-  label: string
-  icon: LucideIcon
-  end?: boolean
-}[] = [
-  {
-    to: "/app/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    end: true,
-  },
-  { to: "/app/bed-board", label: "Bed Board", icon: BedDouble },
-  { to: "/app/admissions", label: "Admissions", icon: UserRoundPlus },
-  { to: "/app/forecast", label: "Forecast", icon: TrendingUp },
-  { to: "/app/alerts", label: "Alerts", icon: Bell },
-  { to: "/app/admin", label: "Admin View", icon: Shield },
-  { to: "/app/settings", label: "Settings", icon: Settings },
-]
 
 export function AppSidebar() {
   const reduceMotion = useReducedMotion()
+  const { role, logout } = useAuthRole()
+  const nav = role ? sidebarNavForRole(role) : []
 
   return (
     <aside className="border-border/80 bg-card flex h-svh w-[260px] shrink-0 flex-col border-r shadow-sm">
@@ -47,8 +22,8 @@ export function AppSidebar() {
           <p className="text-foreground truncate text-sm font-bold tracking-tight">
             Hospi-Track
           </p>
-          <p className="text-muted-foreground truncate text-xs">
-            Real-time operations
+          <p className="text-muted-foreground truncate text-xs capitalize">
+            {role ? `${role} session` : "Operations"}
           </p>
         </div>
       </div>
@@ -57,7 +32,7 @@ export function AppSidebar() {
         className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
         aria-label="App navigation"
       >
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {nav.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -115,9 +90,20 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      <div className="border-border/60 text-muted-foreground border-t p-4 text-xs">
-        <p className="font-medium text-slate-600">Ward A — General</p>
-        <p className="mt-0.5">Mission control</p>
+      <div className="border-border/60 space-y-2 border-t p-4">
+        <p className="text-muted-foreground text-xs">
+          <span className="font-medium text-slate-600">Ward A — General</span>
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full justify-center gap-2 rounded-xl text-xs"
+          onClick={logout}
+        >
+          <LogOut className="size-3.5" />
+          Exit session
+        </Button>
       </div>
     </aside>
   )

@@ -1,20 +1,36 @@
 import { Activity } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { useAuthRole } from "@/context/AuthRoleContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-
-const links = [
-  { kind: "section" as const, id: "features", label: "Features" },
-  { kind: "section" as const, id: "how-it-works", label: "How it works" },
-  { kind: "page" as const, to: "/app/dashboard", label: "Dashboard" },
-]
 
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
 }
 
 export function LandingNav({ className }: { className?: string }) {
+  const { isAuthenticated, role, openRoleModal } = useAuthRole()
+
+  const links = [
+    { kind: "section" as const, id: "features", label: "Features" },
+    { kind: "section" as const, id: "how-it-works", label: "How it works" },
+    ...(isAuthenticated && role
+      ? ([
+          {
+            kind: "page" as const,
+            to: `/${role}/dashboard`,
+            label: "Dashboard",
+          },
+        ] as const)
+      : ([
+          {
+            kind: "modal" as const,
+            label: "Dashboard",
+          },
+        ] as const)),
+  ] as const
+
   return (
     <header
       className={cn(
@@ -49,6 +65,15 @@ export function LandingNav({ className }: { className?: string }) {
               >
                 {l.label}
               </Link>
+            ) : l.kind === "modal" ? (
+              <button
+                key="dashboard-modal"
+                type="button"
+                onClick={openRoleModal}
+                className="hover:text-foreground rounded-lg px-3 py-2 transition-colors duration-300 ease-in-out"
+              >
+                {l.label}
+              </button>
             ) : (
               <button
                 key={l.id}
@@ -71,13 +96,24 @@ export function LandingNav({ className }: { className?: string }) {
           >
             Request demo
           </Button>
-          <Button
-            asChild
-            size="sm"
-            className="rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-500/30"
-          >
-            <Link to="/app/dashboard">View dashboard</Link>
-          </Button>
+          {isAuthenticated && role ? (
+            <Button
+              asChild
+              size="sm"
+              className="rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-500/30"
+            >
+              <Link to={`/${role}/dashboard`}>View dashboard</Link>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              className="rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/25 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-500/30"
+              onClick={openRoleModal}
+            >
+              View dashboard
+            </Button>
+          )}
         </div>
       </div>
     </header>

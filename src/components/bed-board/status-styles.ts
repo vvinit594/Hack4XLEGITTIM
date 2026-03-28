@@ -9,31 +9,39 @@ export const STATUS_LABEL: Record<BedStatus, string> = {
 
 export const TILE_STATUS_STYLES: Record<
   BedStatus,
-  { ring: string; bg: string; accent: string; dot: string }
+  { ring: string; bg: string; accent: string; dot: string; border: string; hoverBorder: string }
 > = {
   available: {
     ring: "ring-emerald-200/90",
     bg: "from-emerald-100/45 via-emerald-50/30 to-white",
     accent: "text-emerald-800",
     dot: "bg-emerald-500",
+    border: "border-emerald-200/50",
+    hoverBorder: "hover:border-emerald-400",
   },
   occupied: {
     ring: "ring-blue-200/90",
     bg: "from-blue-100/40 via-blue-50/35 to-white",
     accent: "text-blue-900",
     dot: "bg-blue-500",
+    border: "border-blue-200/50",
+    hoverBorder: "hover:border-blue-400",
   },
   cleaning: {
     ring: "ring-amber-200/90",
     bg: "from-amber-100/45 via-amber-50/30 to-white",
     accent: "text-amber-900",
     dot: "bg-amber-500",
+    border: "border-amber-200/50",
+    hoverBorder: "hover:border-amber-400",
   },
   reserved: {
     ring: "ring-violet-200/90",
     bg: "from-violet-100/40 via-violet-50/35 to-white",
     accent: "text-violet-900",
     dot: "bg-violet-500",
+    border: "border-violet-200/50",
+    hoverBorder: "hover:border-violet-400",
   },
 }
 

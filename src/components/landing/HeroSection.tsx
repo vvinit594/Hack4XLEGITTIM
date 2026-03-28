@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion"
 import { Link } from "react-router-dom"
 
+import { useAuthRole } from "@/context/AuthRoleContext"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -12,6 +13,7 @@ function scrollTo(id: string) {
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion()
+  const { isAuthenticated, role, openRoleModal } = useAuthRole()
 
   return (
     <section
@@ -75,13 +77,24 @@ export function HeroSection() {
                 whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 400, damping: 22 }}
               >
-                <Button
-                  asChild
-                  size="lg"
-                  className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-7 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition-shadow duration-300 ease-in-out hover:shadow-xl hover:shadow-indigo-500/35"
-                >
-                  <Link to="/app/dashboard">View dashboard</Link>
-                </Button>
+                {isAuthenticated && role ? (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-7 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition-shadow duration-300 ease-in-out hover:shadow-xl hover:shadow-indigo-500/35"
+                  >
+                    <Link to={`/${role}/dashboard`}>View dashboard</Link>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-7 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition-shadow duration-300 ease-in-out hover:shadow-xl hover:shadow-indigo-500/35"
+                    onClick={openRoleModal}
+                  >
+                    View dashboard
+                  </Button>
+                )}
               </motion.div>
               <motion.div
                 whileHover={

@@ -90,13 +90,13 @@ export function ParticipantListPanel({
                     y: 0,
                     ...(isSelected && !reduceMotion
                       ? {
-                          filter: [
-                            "drop-shadow(0 0 0px rgba(37, 99, 235, 0))",
-                            "drop-shadow(0 0 12px rgba(37, 99, 235, 0.42))",
-                            "drop-shadow(0 0 0px rgba(37, 99, 235, 0))",
+                          boxShadow: [
+                            "0 0 0px rgba(59, 130, 246, 0)",
+                            "0 0 15px rgba(59, 130, 246, 0.3)",
+                            "0 0 0px rgba(59, 130, 246, 0)",
                           ],
                         }
-                      : { filter: "none" }),
+                      : { boxShadow: "none" }),
                   }}
                   transition={{
                     delay: reduceMotion ? 0 : 0.035 * index,
@@ -104,8 +104,8 @@ export function ParticipantListPanel({
                     ease: [0.22, 1, 0.36, 1] as const,
                     ...(isSelected && !reduceMotion
                       ? {
-                          filter: {
-                            duration: 1.8,
+                          boxShadow: {
+                            duration: 1,
                             repeat: Infinity,
                             ease: "easeInOut" as const,
                           },
@@ -115,16 +115,19 @@ export function ParticipantListPanel({
                   whileHover={
                     reduceMotion
                       ? undefined
-                      : { y: -4, transition: { duration: 0.3, ease: "easeOut" } }
+                      : { 
+                          y: -2, 
+                          transition: { duration: 0.2, ease: "easeOut" } 
+                        }
                   }
-                  whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+                  whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                   onClick={() => onSelectParticipant(p)}
                   className={cn(
-                    "flex h-full min-h-[8.5rem] w-full flex-col rounded-2xl border bg-white/95 p-5 text-left shadow-sm ring-1 ring-transparent transition-all duration-300 ease-in-out",
-                    "hover:border-indigo-200/80 hover:shadow-lg hover:shadow-indigo-500/10",
-                    "focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none",
-                    isSelected &&
-                      "border-blue-400/80 bg-blue-50/95 shadow-lg shadow-blue-500/15 ring-2 ring-blue-500/55"
+                    "flex h-full min-h-[8.5rem] w-full flex-col rounded-xl border p-5 text-left transition-all duration-300 ease-in-out",
+                    "border-gray-200 bg-white shadow-sm",
+                    "hover:border-blue-400 hover:shadow-md",
+                    isSelected && "border-blue-500 bg-blue-50/50 ring-2 ring-blue-200 shadow-md",
+                    "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">

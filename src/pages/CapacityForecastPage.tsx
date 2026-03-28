@@ -5,6 +5,7 @@ import { Activity, LayoutDashboard, Calendar, History, Info } from "lucide-react
 import { ForecastBadge } from "@/components/forecast/ForecastBadge";
 import { CapacityWidget } from "@/components/forecast/CapacityWidget";
 import { MetricCardsContainer } from "@/components/forecast/MetricCards";
+import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard";
 import { Button } from "@/components/ui/button";
 
 // Mock projection data with initial state
@@ -106,19 +107,31 @@ export function CapacityForecastPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 }}
-            className="mt-8 p-6 rounded-2xl bg-slate-100/50 border border-slate-200/60 flex items-start gap-4"
+            className="mt-8"
           >
-            <div className="mt-0.5 p-2 rounded-lg bg-blue-100/80 border border-blue-200">
-              <Info className="size-4 text-blue-700" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 mb-1">Forecast Insight</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                The <span className="text-slate-900 font-semibold italic">Capacity Crunch</span> expected 
-                at the 8-hour mark is primarily driven by an influx of 12 scheduled elective surgeries 
-                peaking around 6:00 PM. Consider early discharge for stable patients.
-              </p>
-            </div>
+            <AnimatedBorderCard
+              innerClassName="bg-slate-50/95 p-0"
+            >
+              <div className="flex items-start gap-4 p-6">
+                <div className="mt-0.5 rounded-lg border border-blue-200 bg-blue-100/80 p-2">
+                  <Info className="size-4 text-blue-700" />
+                </div>
+                <div>
+                  <h4 className="mb-1 text-sm font-bold text-slate-900">
+                    Forecast Insight
+                  </h4>
+                  <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    The{" "}
+                    <span className="font-semibold text-slate-900 italic">
+                      Capacity Crunch
+                    </span>{" "}
+                    expected at the 8-hour mark is primarily driven by an
+                    influx of 12 scheduled elective surgeries peaking around 6:00
+                    PM. Consider early discharge for stable patients.
+                  </p>
+                </div>
+              </div>
+            </AnimatedBorderCard>
           </motion.div>
 
           {/* Legend / Timeline section (Placeholder) */}

@@ -1,52 +1,85 @@
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion"
+import type { ReactNode } from "react"
+
+import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard"
+import { cn } from "@/lib/utils"
 
 type StatCardProps = {
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  trend?: string;
-  trendPositive?: boolean;
-  gradient: string;
-};
+  title: string
+  value: string | number
+  icon: ReactNode
+  trend?: string
+  trendPositive?: boolean
+  gradient: string
+}
 
-export function StatCard({ title, value, icon, trend, trendPositive, gradient }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  icon,
+  trend,
+  trendPositive,
+  gradient,
+}: StatCardProps) {
   return (
     <motion.div
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="relative overflow-hidden p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm shadow-slate-100/50"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="h-full"
     >
-      <div className={cn("absolute top-0 right-0 w-24 h-24 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 opacity-20", gradient)} />
-      
-      <div className="relative flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold tracking-tight text-slate-900">{value}</h3>
-            {trend && (
-              <span className={cn(
-                "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
-                trendPositive ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-              )}>
-                {trend}
-              </span>
+      <AnimatedBorderCard className="h-full" innerClassName="p-0 overflow-hidden">
+        <div className="relative overflow-hidden p-6">
+          <div
+            className={cn(
+              "absolute top-0 right-0 h-24 w-24 translate-x-1/2 rounded-full opacity-20 blur-3xl",
+              gradient
             )}
+          />
+
+          <div className="relative flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                {title}
+              </p>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-3xl font-bold tracking-tight text-slate-900">
+                  {value}
+                </h3>
+                {trend && (
+                  <span
+                    className={cn(
+                      "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
+                      trendPositive
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-red-50 text-red-600"
+                    )}
+                  >
+                    {trend}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div
+              className={cn(
+                "rounded-xl p-3 text-white shadow-lg",
+                gradient
+              )}
+            >
+              {icon}
+            </div>
           </div>
         </div>
-        <div className={cn("p-3 rounded-xl text-white shadow-lg", gradient)}>
-          {icon}
-        </div>
-      </div>
+      </AnimatedBorderCard>
     </motion.div>
-  );
+  )
 }
 
 export function StatBar({ stats }: { stats: StatCardProps[] }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, i) => (
         <StatCard key={i} {...stat} />
       ))}
     </div>
-  );
+  )
 }
