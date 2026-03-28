@@ -9,12 +9,12 @@ export function LandingFooter() {
             <Activity className="size-4" aria-hidden />
           </span>
           <div>
-            <div className="text-foreground font-semibold">WardWatch AI</div>
+            <div className="text-foreground font-semibold">Hospi-Track</div>
             <div>Ward intelligence for modern hospitals.</div>
           </div>
         </div>
         <p className="text-muted-foreground text-xs sm:text-sm">
-          © {new Date().getFullYear()} WardWatch AI. All rights reserved.
+          © {new Date().getFullYear()} Hospi-Track. All rights reserved.
         </p>
       </div>
     </footer>
