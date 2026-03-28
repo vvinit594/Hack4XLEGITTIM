@@ -13,7 +13,7 @@ const steps = [
   },
   {
     title: "System updates instantly",
-    body: "WardWatch reconciles occupancy, flow, and alerts across the whole dashboard.",
+    body: "Hospi-Track reconciles occupancy, flow, and alerts across the whole dashboard.",
     icon: Zap,
     accent: "from-indigo-500/15 to-blue-500/10 text-indigo-700",
   },

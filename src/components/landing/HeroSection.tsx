@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion"
+import { Link } from "react-router-dom"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -75,12 +76,11 @@ export function HeroSection() {
                 transition={{ type: "spring", stiffness: 400, damping: 22 }}
               >
                 <Button
-                  type="button"
+                  asChild
                   size="lg"
                   className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-7 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition-shadow duration-300 ease-in-out hover:shadow-xl hover:shadow-indigo-500/35"
-                  onClick={() => scrollTo("preview")}
                 >
-                  View dashboard
+                  <Link to="/app/dashboard">View dashboard</Link>
                 </Button>
               </motion.div>
               <motion.div
