@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { Activity, ArrowLeft, Loader2, Wifi, WifiOff } from "lucide-react"
 
+import { BedDetailModal } from "@/components/bed-board/BedDetailModal"
 import { BedGrid } from "@/components/bed-board/BedGrid"
 import { ParticipantListPanel } from "@/components/bed-board/ParticipantListPanel"
 import { StatusModal } from "@/components/bed-board/StatusModal"
@@ -97,6 +98,9 @@ export function BedBoardPage() {
   >(null)
   const [mobileTab, setMobileTab] = useState<MobileTab>("participants")
 
+  const [detailBed, setDetailBed] = useState<BedWithPatient | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+
   const [statusBed, setStatusBed] = useState<BedWithPatient | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
 
@@ -165,10 +169,12 @@ export function BedBoardPage() {
   const handleBedClick = useCallback((bed: BedWithPatient) => {
     setSelectedBedId(bed.id)
     setSelectedParticipantId(bed.patient?.id ?? null)
+    setDetailBed(bed)
+    setDetailModalOpen(true)
     if (bed.patient) setMobileTab("participants")
   }, [])
 
-  const handleEditStatus = useCallback((bed: BedWithPatient) => {
+  const handleEditStatusFromDetail = useCallback((bed: BedWithPatient) => {
     setStatusBed(bed)
     setSheetOpen(true)
   }, [])
@@ -305,7 +311,6 @@ export function BedBoardPage() {
                     selectedBedId={selectedBedId}
                     registerBedNode={registerBedNode}
                     onSelectBed={handleBedClick}
-                    onEditBedStatus={handleEditStatus}
                   />
                 </div>
               </div>
@@ -313,6 +318,13 @@ export function BedBoardPage() {
           </div>
         )}
       </main>
+
+      <BedDetailModal
+        bed={detailBed}
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        onEditStatus={handleEditStatusFromDetail}
+      />
 
       <StatusModal
         bed={statusBed}

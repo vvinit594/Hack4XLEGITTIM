@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom"
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { BedBoardPage } from "@/pages/BedBoardPage"
+import { CapacityForecastPage } from "@/pages/CapacityForecastPage"
 import { DashboardHomePage } from "@/pages/DashboardHomePage"
 import { HomePage } from "@/pages/HomePage"
 import { PatientFlowPage } from "@/pages/PatientFlowPage"
@@ -19,7 +20,7 @@ export default function App() {
         <Route path="admissions" element={<PatientFlowPage />} />
         <Route
           path="forecast"
-          element={<PlaceholderPage title="Forecast" />}
+          element={<CapacityForecastPage />}
         />
         <Route path="alerts" element={<PlaceholderPage title="Alerts" />} />
         <Route
