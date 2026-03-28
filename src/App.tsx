@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { AdminDashboardPage } from "@/pages/AdminDashboardPage"
+import { AdminWardDetailPage } from "@/pages/AdminWardDetailPage"
 import { BedBoardPage } from "@/pages/BedBoardPage"
 import { CapacityForecastPage } from "@/pages/CapacityForecastPage"
 import { DashboardHomePage } from "@/pages/DashboardHomePage"
@@ -23,10 +25,10 @@ export default function App() {
           element={<CapacityForecastPage />}
         />
         <Route path="alerts" element={<PlaceholderPage title="Alerts" />} />
-        <Route
-          path="admin"
-          element={<PlaceholderPage title="Admin view" />}
-        />
+        <Route path="admin">
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="ward/:id" element={<AdminWardDetailPage />} />
+        </Route>
         <Route
           path="settings"
           element={<PlaceholderPage title="Settings" />}
