@@ -4,11 +4,11 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage"
 import { AdminWardDetailPage } from "@/pages/AdminWardDetailPage"
 import { BedBoardPage } from "@/pages/BedBoardPage"
-import { CapacityForecastPage } from "@/pages/CapacityForecastPage"
-import { DashboardHomePage } from "@/pages/DashboardHomePage"
-import { HomePage } from "@/pages/HomePage"
-import { PatientFlowPage } from "@/pages/PatientFlowPage"
 import { PlaceholderPage } from "@/pages/PlaceholderPage"
+import { HomePage } from "@/pages/HomePage"
+import { DashboardHomePage } from "@/pages/DashboardHomePage"
+import { PatientFlowPage } from "@/pages/PatientFlowPage"
+import ForecastDashboard from "@/pages/ForecastDashboard"
 
 export default function App() {
   return (
@@ -22,7 +22,7 @@ export default function App() {
         <Route path="admissions" element={<PatientFlowPage />} />
         <Route
           path="forecast"
-          element={<CapacityForecastPage />}
+          element={<ForecastDashboard />}
         />
         <Route path="alerts" element={<PlaceholderPage title="Alerts" />} />
         <Route path="admin">

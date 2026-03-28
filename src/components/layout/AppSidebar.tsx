@@ -1,12 +1,12 @@
 import { motion, useReducedMotion } from "framer-motion"
 import {
   Activity,
+  BarChart2,
   BedDouble,
   Bell,
   LayoutDashboard,
   Settings,
   Shield,
-  TrendingUp,
   UserRoundPlus,
   type LucideIcon,
 } from "lucide-react"
@@ -28,7 +28,7 @@ const NAV: {
   },
   { to: "/app/bed-board", label: "Bed Board", icon: BedDouble },
   { to: "/app/admissions", label: "Admissions", icon: UserRoundPlus },
-  { to: "/app/forecast", label: "Forecast", icon: TrendingUp },
+  { to: "/app/forecast", label: "AI Forecast", icon: BarChart2 },
   { to: "/app/alerts", label: "Alerts", icon: Bell },
   { to: "/app/admin", label: "Admin View", icon: Shield },
   { to: "/app/settings", label: "Settings", icon: Settings },
