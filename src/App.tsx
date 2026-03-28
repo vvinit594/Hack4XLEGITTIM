@@ -40,6 +40,10 @@ export default function App() {
           path="/outbreak"
           element={<Navigate to="/app/outbreak" replace />}
         />
+        <Route
+          path="/forecast"
+          element={<Navigate to="/app/forecast" replace />}
+        />
 
         <Route path="/:userRole" element={<RequireAuthRoleMatch />}>
           <Route element={<RoleLayout />}>
