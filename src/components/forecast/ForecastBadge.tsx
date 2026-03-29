@@ -5,11 +5,16 @@ import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard"
 import { cn } from "@/lib/utils"
 
 type ForecastBadgeProps = {
-  percentage: number
+  pct4h: number
+  pct8h: number
 }
 
-export function ForecastBadge({ percentage }: ForecastBadgeProps) {
-  if (percentage < 90) return null
+export function ForecastBadge({ pct4h, pct8h }: ForecastBadgeProps) {
+  if (pct4h < 90 && pct8h < 90) return null
+
+  const primary4h = pct4h >= 90
+  const label = primary4h ? "4 Hours" : "8 Hours"
+  const pct = primary4h ? pct4h : pct8h
 
   return (
     <motion.div
@@ -48,7 +53,7 @@ export function ForecastBadge({ percentage }: ForecastBadgeProps) {
         >
           <AlertCircle className="size-4 animate-pulse" />
           <span className="text-sm font-bold tracking-tight">
-            ⚠️ Capacity Crunch in 4 Hours
+            ⚠️ Capacity crunch in {label} ({Math.round(pct)}%)
           </span>
         </motion.div>
       </AnimatedBorderCard>

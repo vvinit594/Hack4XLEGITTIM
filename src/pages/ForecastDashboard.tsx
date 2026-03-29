@@ -13,41 +13,18 @@ import {
 
 import { BarChart2, RefreshCw, AlertTriangle, CheckCircle2, BrainCircuit, TrendingUp, Siren, LogOut, Users } from "lucide-react"
 
-const AI_SERVICE_BASE = "http://localhost:8001"
-const DEMO_WARD_ID = "00000000-0000-0000-0000-000000000001"
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface HourPrediction {
-  hour: number
-  datetime_utc: string
-  predicted_occupancy: number
-  confidence: number
-  occupancy_pct: number
-}
-
-interface AiInsights {
-  clinical_alert: string
-  discharge_action: string
-  staffing_advisory: string
-}
-
-interface ForecastResponse {
-  ward_id: string
-  generated_at: string
-  predictions: HourPrediction[]
-  summary: string
-  insights: AiInsights
-  high_risk_windows: { start: string; end: string; max_pct: number }[]
-  peak_hour: HourPrediction
-  model_version: string
-}
-
-interface WeekdayImpact {
-  day_name: string
-  avg_admissions: number
-  vs_baseline_pct: number
-}
+import {
+  ForecastApiError,
+  getDemoWardId,
+  getWeekdayImpact,
+  loadForecastWithFallback,
+  runForecast,
+  saveForecast,
+  type ForecastResponse,
+  type HourPrediction,
+  type WeekdayImpact,
+} from "@/lib/forecast-api"
+import { FORECAST_DEMO_TOTAL_BEDS } from "@/lib/forecast-ui-map"
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -132,40 +109,61 @@ function InsightCard({ icon, label, text, borderColor, iconBg, labelColor }: Ins
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ForecastDashboard() {
+  const wardId = getDemoWardId()
+
   const [forecast, setForecast] = useState<ForecastResponse | null>(null)
   const [weekday, setWeekday] = useState<WeekdayImpact[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchAll = useCallback(async () => {
+  /** Cached-first load for faster paint; 404 cache runs full pipeline. */
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [fRes, wRes] = await Promise.all([
-        fetch(`${AI_SERVICE_BASE}/forecast/run/${DEMO_WARD_ID}`, { method: "POST" }),
-        fetch(`${AI_SERVICE_BASE}/forecast/weekday/${DEMO_WARD_ID}`),
-      ])
-
-      if (!fRes.ok) {
-        const errBody = await fRes.json().catch(() => ({}))
-        throw new Error(errBody?.detail ?? `Forecast API error ${fRes.status}`)
-      }
-
-      const fData: ForecastResponse = await fRes.json()
+      const { forecast: fData, weekday: wData } =
+        await loadForecastWithFallback(wardId)
       setForecast(fData)
-
-      if (wRes.ok) {
-        const wData: WeekdayImpact[] = await wRes.json()
-        setWeekday(wData)
-      }
+      setWeekday(wData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred")
+      const msg =
+        err instanceof ForecastApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Unknown error occurred"
+      setError(msg)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [wardId])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  /** Full LangGraph run + persist (explicit refresh). */
+  const forceRun = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const fData = await runForecast(wardId)
+      await saveForecast(wardId, fData.predictions).catch(() => undefined)
+      setForecast(fData)
+      const wData = await getWeekdayImpact(wardId).catch(() => [])
+      setWeekday(wData)
+    } catch (err) {
+      const msg =
+        err instanceof ForecastApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Unknown error occurred"
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }, [wardId])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const predictions = forecast?.predictions ?? []
@@ -202,9 +200,13 @@ export default function ForecastDashboard() {
         <AlertTriangle className="h-12 w-12 text-red-400" />
         <p className="text-lg font-semibold text-white">Forecast service unreachable</p>
         <p className="max-w-md text-center text-sm text-slate-400">{error}</p>
-        <p className="text-xs text-slate-500">Make sure <code className="text-violet-400">python main.py</code> is running on port 8001</p>
+        <p className="text-xs text-slate-500">
+          Run <code className="text-violet-400">python main.py</code> in{" "}
+          <code className="text-violet-400">ai_service</code> (port 8001) and set{" "}
+          <code className="text-violet-400">VITE_AI_SERVICE_URL</code> if needed.
+        </p>
         <button
-          onClick={fetchAll}
+          onClick={() => void loadData()}
           className="mt-2 flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
         >
           <RefreshCw className="h-4 w-4" /> Retry
@@ -234,7 +236,7 @@ export default function ForecastDashboard() {
             </div>
           </div>
           <button
-            onClick={fetchAll}
+            onClick={() => void forceRun()}
             disabled={loading}
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
           >
@@ -250,7 +252,12 @@ export default function ForecastDashboard() {
         <div className="space-y-2">
           <p className="text-xs text-slate-500">A quick snapshot of what the AI predicts for the next 24 hours — how many beds will be in use, when it peaks, how many hours are dangerous, and how certain the model is.</p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatCard label="Peak Occupancy" value={`${peakOccupancy} beds`} sub={`of 40 total`} accent="text-violet-400" />
+            <StatCard
+              label="Peak Occupancy"
+              value={`${peakOccupancy} beds`}
+              sub={`of ${FORECAST_DEMO_TOTAL_BEDS} total`}
+              accent="text-violet-400"
+            />
             <StatCard label="Peak Time" value={peakTime} sub="highest demand hour" accent="text-indigo-400" />
             <StatCard
               label="High Risk Hours"
@@ -298,7 +305,10 @@ export default function ForecastDashboard() {
               <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-red-500" />High Risk</span>
             </div>
           </div>
-          <p className="mb-4 text-xs text-slate-500">Each bar = 1 hour of the day. Height shows how many beds are predicted occupied. Hover any bar to see exact numbers. Red dashed line = 90% full (36 beds).</p>
+          <p className="mb-4 text-xs text-slate-500">
+            Each bar = 1 hour of the day. Height shows how many beds are predicted occupied. Hover any bar to see exact numbers. Red dashed line = 90% full (
+            {Math.round(FORECAST_DEMO_TOTAL_BEDS * 0.9)} beds).
+          </p>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={predictions} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
@@ -311,14 +321,14 @@ export default function ForecastDashboard() {
                 interval={2}
               />
               <YAxis
-                domain={[0, 40]}
+                domain={[0, FORECAST_DEMO_TOTAL_BEDS]}
                 tick={{ fill: "#94a3b8", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
               <ReferenceLine
-                y={36}
+                y={Math.round(FORECAST_DEMO_TOTAL_BEDS * 0.9)}
                 stroke="#ef4444"
                 strokeDasharray="4 3"
                 strokeWidth={1.5}

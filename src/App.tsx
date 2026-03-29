@@ -60,7 +60,6 @@ export default function App() {
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="outbreak" element={<OutbreakPage />} />
             <Route path="forecast" element={<CapacityForecastPage />} />
-            <Route path="alerts" element={<PlaceholderPage title="Alerts" />} />
             <Route path="admin">
               <Route index element={<AdminDashboardPage />} />
               <Route path="ward/:id" element={<AdminWardDetailPage />} />

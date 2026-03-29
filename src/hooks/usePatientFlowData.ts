@@ -65,6 +65,14 @@ function buildMockData() {
       source: "walk_in",
       expected_arrival: new Date(now + 10 * 60 * 1000).toISOString(),
     },
+    {
+      id: "flow-q-3",
+      patient_name: "Neha Kapoor",
+      arrival_type: "emergency",
+      status: "pending",
+      source: "emergency",
+      expected_arrival: new Date(now + 28 * 60 * 1000).toISOString(),
+    },
   ]
 
   const elective: AdmissionQueueItem[] = [

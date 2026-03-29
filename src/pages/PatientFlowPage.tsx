@@ -191,8 +191,13 @@ function AwaitingCard({
       className="border-border/80 bg-background rounded-2xl border p-4 shadow-sm"
     >
       <p className="text-foreground font-semibold">{item.patient_name}</p>
-      <p className="text-muted-foreground mt-1 text-sm capitalize">
-        Arrival: {item.arrival_type}
+      <p className="text-muted-foreground mt-1 text-sm">
+        Arrival:{" "}
+        {item.arrival_type === "emergency" ? (
+          <span className="font-medium text-red-600">Emergency</span>
+        ) : (
+          <span className="capitalize">{item.arrival_type}</span>
+        )}
       </p>
       <p className="text-muted-foreground mt-2 text-xs">
         Expected: {formatFlowTime(item.expected_arrival)}

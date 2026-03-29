@@ -1,14 +1,19 @@
-/** Realtime bed board state + Supabase channel (see also `beds-api` for PATCH). */
+/** Bed board state: Prisma API (preferred), Supabase realtime, or local mock. */
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { patchBedStatus, type PatchBedStatusPayload } from "@/lib/beds-api"
+import { getHospiApiBase } from "@/lib/hospi-api"
 import {
   getSupabase,
   normalizeBedRow,
   type BedRowDb,
 } from "@/lib/supabase"
-import type { BedWithPatient, BedsRealtimeStatus } from "@/types/bed"
+import type {
+  BedWithPatient,
+  BedsRealtimeStatus,
+  ParticipantListItem,
+} from "@/types/bed"
 
 const MOCK_BEDS: BedWithPatient[] = [
   {
@@ -139,23 +144,85 @@ const MOCK_BEDS: BedWithPatient[] = [
   },
 ]
 
+const MOCK_WAITING: ParticipantListItem[] = [
+  {
+    id: "unassigned-0003",
+    patient_code: "P1012",
+    full_name: "Kiran Bose",
+    gender: "other",
+    condition_category: "Observation — no bed yet",
+    doctor_name: "Dr. S. Rao",
+    bed_id: null,
+    bed_code: null,
+  },
+]
+
+type BoardMode = "api" | "supabase" | "mock"
+
+function resolveMode(): BoardMode {
+  if (getHospiApiBase() !== undefined) return "api"
+  if (getSupabase()) return "supabase"
+  return "mock"
+}
+
+type BedBoardApiResponse = {
+  beds: BedWithPatient[]
+  waitingPatients: ParticipantListItem[]
+}
+
 export function useRealtimeBeds() {
   const client = useMemo(() => getSupabase(), [])
-  const isMock = client === null
+  const mode = useMemo(() => resolveMode(), [])
 
   const [beds, setBeds] = useState<BedWithPatient[]>(() =>
-    client ? [] : MOCK_BEDS
+    mode === "mock" ? MOCK_BEDS : []
   )
-  const [loading, setLoading] = useState(() => client !== null)
+  const [apiWaiting, setApiWaiting] = useState<ParticipantListItem[]>([])
+  const [loading, setLoading] = useState(() => mode !== "mock")
   const [error, setError] = useState<string | null>(null)
   const [connectionState, setConnectionState] =
-    useState<BedsRealtimeStatus>(() => (client ? "connecting" : "mock"))
+    useState<BedsRealtimeStatus>(() =>
+      mode === "mock"
+        ? "mock"
+        : mode === "api"
+          ? "connecting"
+          : "connecting"
+    )
+
+  const waitingParticipants = useMemo(() => {
+    if (mode === "mock") return MOCK_WAITING
+    if (mode === "api") return apiWaiting
+    return []
+  }, [mode, apiWaiting])
 
   const channelRef = useRef<RealtimeChannel | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const attemptRef = useRef(0)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const connectRef = useRef<() => void>(() => {})
+
+  const fetchFromApi = useCallback(async () => {
+    const base = getHospiApiBase()
+    if (base === undefined) return
+    const prefix = base === "" ? "" : base
+    try {
+      const res = await fetch(`${prefix}/api/bed-board`)
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `HTTP ${res.status}`)
+      }
+      const data = (await res.json()) as BedBoardApiResponse
+      setBeds(data.beds ?? [])
+      setApiWaiting(data.waitingPatients ?? [])
+      setError(null)
+      setConnectionState("connected")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load bed board")
+      setConnectionState("error")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   const fetchBeds = useCallback(async () => {
     if (!client) return
@@ -243,18 +310,25 @@ export function useRealtimeBeds() {
   }, [connect])
 
   useEffect(() => {
-    if (!client) return
+    if (mode !== "api") return
+    void fetchFromApi()
+    const id = setInterval(() => void fetchFromApi(), 4000)
+    return () => clearInterval(id)
+  }, [mode, fetchFromApi])
+
+  useEffect(() => {
+    if (mode !== "supabase" || !client) return
 
     connect()
 
     return () => {
       teardownChannel()
     }
-  }, [client, connect, teardownChannel])
+  }, [mode, client, connect, teardownChannel])
 
   const updateBedStatus = useCallback(
     async (bedId: string, payload: PatchBedStatusPayload) => {
-      if (!client) {
+      if (mode === "mock") {
         setBeds((prev) =>
           prev.map((b) => {
             if (b.id !== bedId) return b
@@ -276,18 +350,27 @@ export function useRealtimeBeds() {
         return
       }
       await patchBedStatus(client, bedId, payload)
-      await fetchBeds()
+      if (mode === "api") await fetchFromApi()
+      else await fetchBeds()
     },
-    [client, fetchBeds]
+    [mode, client, fetchFromApi, fetchBeds]
   )
+
+  const refetch =
+    mode === "api"
+      ? fetchFromApi
+      : mode === "supabase"
+        ? fetchBeds
+        : async () => {}
 
   return {
     beds,
+    waitingParticipants,
     loading,
     error,
-    isMock,
+    isMock: mode === "mock",
     connectionState,
-    refetch: fetchBeds,
+    refetch,
     updateBedStatus,
   }
 }

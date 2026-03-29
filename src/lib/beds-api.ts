@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+import { getHospiApiBase } from "@/lib/hospi-api"
 import type { BedStatus } from "@/types/bed"
 
 export type PatchBedStatusPayload = {
@@ -12,10 +13,11 @@ export async function patchBedStatus(
   bedId: string,
   payload: PatchBedStatusPayload
 ): Promise<void> {
-  const apiBase = import.meta.env.VITE_API_URL?.replace(/\/$/, "")
+  const apiBase = getHospiApiBase()
 
-  if (apiBase) {
-    const res = await fetch(`${apiBase}/api/beds/${bedId}/status`, {
+  if (apiBase !== undefined) {
+    const prefix = apiBase === "" ? "" : apiBase
+    const res = await fetch(`${prefix}/api/beds/${bedId}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

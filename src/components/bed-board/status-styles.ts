@@ -9,7 +9,16 @@ export const STATUS_LABEL: Record<BedStatus, string> = {
 
 export const TILE_STATUS_STYLES: Record<
   BedStatus,
-  { ring: string; bg: string; accent: string; dot: string; border: string; hoverBorder: string }
+  {
+    ring: string
+    bg: string
+    accent: string
+    dot: string
+    border: string
+    hoverBorder: string
+    /** Pill badge in detail modal */
+    badgeSurface: string
+  }
 > = {
   available: {
     ring: "ring-emerald-200/90",
@@ -18,6 +27,8 @@ export const TILE_STATUS_STYLES: Record<
     dot: "bg-emerald-500",
     border: "border-emerald-200/50",
     hoverBorder: "hover:border-emerald-400",
+    badgeSurface:
+      "border border-emerald-200/70 bg-emerald-50/95 text-emerald-900",
   },
   occupied: {
     ring: "ring-blue-200/90",
@@ -26,6 +37,7 @@ export const TILE_STATUS_STYLES: Record<
     dot: "bg-blue-500",
     border: "border-blue-200/50",
     hoverBorder: "hover:border-blue-400",
+    badgeSurface: "border border-blue-200/70 bg-blue-50/95 text-blue-900",
   },
   cleaning: {
     ring: "ring-amber-200/90",
@@ -34,6 +46,8 @@ export const TILE_STATUS_STYLES: Record<
     dot: "bg-amber-500",
     border: "border-amber-200/50",
     hoverBorder: "hover:border-amber-400",
+    badgeSurface:
+      "border border-amber-200/70 bg-amber-50/95 text-amber-900",
   },
   reserved: {
     ring: "ring-violet-200/90",
@@ -42,6 +56,8 @@ export const TILE_STATUS_STYLES: Record<
     dot: "bg-violet-500",
     border: "border-violet-200/50",
     hoverBorder: "hover:border-violet-400",
+    badgeSurface:
+      "border border-violet-200/70 bg-violet-50/95 text-violet-900",
   },
 }
 

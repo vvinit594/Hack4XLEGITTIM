@@ -1,0 +1,60 @@
+// PostgreSQL (local or Supabase). Same tables map cleanly when you point DATABASE_URL at Supabase later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BedStatus {
+  available
+  occupied
+  cleaning
+  reserved
+}
+
+model Bed {
+  id         String    @id @default(uuid()) @db.Uuid
+  code       String    @unique
+  status     BedStatus
+  statusNote String?   @map("status_note")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  patient    Patient?
+
+  @@map("beds")
+}
+
+model Patient {
+  id                 String    @id @default(uuid()) @db.Uuid
+  bedId              String?   @unique @map("bed_id") @db.Uuid
+  bed                Bed?      @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  fullName           String    @map("full_name")
+  patientCode        String?   @map("patient_code")
+  gender             String?   @db.Text
+  admissionDate      DateTime? @map("admission_date") @db.Date
+  conditionCategory  String?   @map("condition_category")
+  doctorName         String?   @map("doctor_name")
+
+  @@map("patients")
+}
+
+model EquipmentItem {
+  id                String    @id @default(uuid()) @db.Uuid
+  sku               String    @unique
+  name              String
+  category          String
+  ward              String
+  total             Int
+  available         Int
+  inUse             Int       @map("in_use")
+  reserved          Int
+  lowStockThreshold Int       @map("low_stock_threshold")
+  lastAudit         DateTime? @map("last_audit") @db.Date
+  dailyUseAvg       Float     @map("daily_use_avg")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("equipment_items")
+}

@@ -23,7 +23,7 @@ function ConnectionPill({
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
         <WifiOff className="size-3.5" aria-hidden />
-        Demo data (configure Supabase for live)
+        Demo data (set VITE_API_URL or Supabase for live)
       </span>
     )
   }
@@ -32,6 +32,14 @@ function ConnectionPill({
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
         <Loader2 className="size-3.5 animate-spin" aria-hidden />
         Reconnecting…
+      </span>
+    )
+  }
+  if (state === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200/90 bg-red-50 px-3 py-1 text-xs font-medium text-red-900">
+        <WifiOff className="size-3.5" aria-hidden />
+        Connection error
       </span>
     )
   }
@@ -87,10 +95,20 @@ export function BedBoardPage() {
   const { embedded = false } =
     useOutletContext<BedBoardOutletContext | undefined>() ?? {}
 
-  const { beds, loading, error, isMock, connectionState, updateBedStatus } =
-    useRealtimeBeds()
+  const {
+    beds,
+    waitingParticipants,
+    loading,
+    error,
+    isMock,
+    connectionState,
+    updateBedStatus,
+  } = useRealtimeBeds()
 
-  const participants = useMemo(() => participantsFromBeds(beds), [beds])
+  const participants = useMemo(
+    () => participantsFromBeds(beds, waitingParticipants),
+    [beds, waitingParticipants]
+  )
 
   const [selectedBedId, setSelectedBedId] = useState<string | null>(null)
   const [selectedParticipantId, setSelectedParticipantId] = useState<

@@ -1,6 +1,5 @@
 import {
   BedDouble,
-  Bell,
   LayoutDashboard,
   Package,
   Settings,
@@ -29,20 +28,20 @@ export function sidebarNavForRole(role: HospitalRole): SidebarNavItem[] {
     { to: "/app/forecast", label: "Forecast", icon: TrendingUp },
     { to: "/app/outbreak", label: "Outbreak", icon: Siren },
     { to: "/app/admin", label: "Admin view", icon: Shield },
-    { to: "/app/alerts", label: "Alerts", icon: Bell },
     { to: "/app/settings", label: "Settings", icon: Settings },
   ]
   const nurse: SidebarNavItem[] = [
     { to: home, label: "Home", icon: LayoutDashboard, end: true },
     { to: "/app/bed-board", label: "Bed Board", icon: BedDouble },
     { to: "/app/admissions", label: "Admissions", icon: UserRoundPlus },
-    { to: "/app/alerts", label: "Alerts", icon: Bell },
+    { to: "/app/inventory", label: "Inventory", icon: Package },
     { to: "/app/settings", label: "Settings", icon: Settings },
   ]
   const staff: SidebarNavItem[] = [
     { to: home, label: "Home", icon: LayoutDashboard, end: true },
+    { to: "/app/bed-board", label: "Bed Board", icon: BedDouble },
+    { to: "/app/admissions", label: "Admissions", icon: UserRoundPlus },
     { to: "/app/inventory", label: "Inventory", icon: Package },
-    { to: "/app/alerts", label: "Alerts", icon: Bell },
     { to: "/app/settings", label: "Settings", icon: Settings },
   ]
   if (role === "nurse") return nurse

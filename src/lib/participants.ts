@@ -1,19 +1,5 @@
 import type { BedWithPatient, ParticipantListItem } from "@/types/bed"
 
-/** Waiting / unassigned patients (no bed in mock / ED hold) — merged into the left panel. */
-export const UNASSIGNED_PARTICIPANTS: ParticipantListItem[] = [
-  {
-    id: "unassigned-0003",
-    patient_code: "P1012",
-    full_name: "Kiran Bose",
-    gender: "other",
-    condition_category: "Observation — no bed yet",
-    doctor_name: "Dr. S. Rao",
-    bed_id: null,
-    bed_code: null,
-  },
-]
-
 function patientCode(p: {
   patient_code?: string | null
   id: string
@@ -22,7 +8,10 @@ function patientCode(p: {
   return `P${p.id.replace(/-/g, "").slice(0, 6).toUpperCase()}`
 }
 
-export function participantsFromBeds(beds: BedWithPatient[]): ParticipantListItem[] {
+export function participantsFromBeds(
+  beds: BedWithPatient[],
+  waiting: ParticipantListItem[] = []
+): ParticipantListItem[] {
   const assigned: ParticipantListItem[] = []
   for (const bed of beds) {
     if (!bed.patient) continue
@@ -38,7 +27,7 @@ export function participantsFromBeds(beds: BedWithPatient[]): ParticipantListIte
     })
   }
   assigned.sort((a, b) => a.full_name.localeCompare(b.full_name))
-  const unassigned = [...UNASSIGNED_PARTICIPANTS].sort((a, b) =>
+  const unassigned = [...waiting].sort((a, b) =>
     a.full_name.localeCompare(b.full_name)
   )
   return [...unassigned, ...assigned]

@@ -1,3 +1,4 @@
+# Python 3.14+ / Windows: if install fails, use: pip install -r requirements-flexible.txt
 fastapi==0.111.0
 uvicorn==0.29.0
 scikit-learn==1.4.2
@@ -6,8 +7,9 @@ numpy==1.26.4
 langchain==0.2.6
 langgraph==0.1.19
 google-generativeai>=0.7.0
-supabase>=2.10.0
+# Pin below 2.11: newer supabase pulls storage3+pyiceberg (needs MSVC C++ build tools on Windows).
+supabase==2.10.0
 joblib==1.4.2
 python-dotenv==1.0.1
-httpx==0.27.0
+httpx>=0.26,<0.28
 pydantic==2.7.1

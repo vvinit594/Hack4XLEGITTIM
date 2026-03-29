@@ -67,14 +67,23 @@ export function canAccessAppPath(
       "forecast",
       "outbreak",
       "admin",
-      "alerts",
       "settings",
     ].includes(module)
   }
   if (role === "nurse") {
-    return ["dashboard", "bed-board", "admissions", "alerts", "settings"].includes(
-      module
-    )
+    return [
+      "dashboard",
+      "bed-board",
+      "admissions",
+      "inventory",
+      "settings",
+    ].includes(module)
   }
-  return ["dashboard", "inventory", "alerts", "settings"].includes(module)
+  return [
+    "dashboard",
+    "bed-board",
+    "admissions",
+    "inventory",
+    "settings",
+  ].includes(module)
 }

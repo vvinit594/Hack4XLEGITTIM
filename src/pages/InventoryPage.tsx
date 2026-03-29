@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import {
   Bell,
+  Loader2,
   Package,
   Search as SearchIcon,
   UserRound,
@@ -19,13 +20,7 @@ import { InventorySummaryCards } from "@/components/inventory/InventorySummaryCa
 import { InventoryTable } from "@/components/inventory/InventoryTable"
 import { LowStockPanel } from "@/components/inventory/LowStockPanel"
 import { Button } from "@/components/ui/button"
-import { INVENTORY_SEED } from "@/lib/inventory-seed"
-import {
-  inventoryMarkInUse,
-  inventoryRelease,
-  inventoryReserve,
-  inventorySetTotal,
-} from "@/lib/inventory-actions"
+import { useInventoryData } from "@/hooks/useInventoryData"
 import { computeInventoryMetrics } from "@/lib/inventory-metrics"
 import type { InventoryItem } from "@/types/inventory"
 
@@ -50,9 +45,17 @@ function matchesFilters(item: InventoryItem, f: InventoryFilterState): boolean {
 
 export function InventoryPage() {
   const reduceMotion = useReducedMotion()
-  const [items, setItems] = useState<InventoryItem[]>(() => [...INVENTORY_SEED])
+  const { items, loading, error, reserve, markInUse, release, setTotal } =
+    useInventoryData()
   const [filters, setFilters] = useState<InventoryFilterState>(defaultFilters)
-  const [detailItem, setDetailItem] = useState<InventoryItem | null>(null)
+  const [detailId, setDetailId] = useState<string | null>(null)
+
+  const detailItem = useMemo(
+    () => (detailId ? (items.find((i) => i.id === detailId) ?? null) : null),
+    [items, detailId]
+  )
+
+  const openDetail = useCallback((i: InventoryItem) => setDetailId(i.id), [])
 
   const filtered = useMemo(
     () => items.filter((i) => matchesFilters(i, filters)),
@@ -61,63 +64,60 @@ export function InventoryPage() {
 
   const metrics = useMemo(() => computeInventoryMetrics(items), [items])
 
-  const patchItem = useCallback((next: InventoryItem) => {
-    setItems((prev) => prev.map((i) => (i.id === next.id ? next : i)))
-    setDetailItem((d) => (d?.id === next.id ? next : d))
-  }, [])
-
   const handleReserve = useCallback(
     (item: InventoryItem) => {
-      const next = inventoryReserve(item)
-      if (!next) {
-        toast.error("No available units to reserve.")
-        return
-      }
-      patchItem(next)
-      toast.success(`Reserved 1× ${item.name}`)
+      void (async () => {
+        const r = await reserve(item)
+        if (!r.ok) {
+          toast.error(r.message)
+          return
+        }
+        toast.success(`Reserved 1× ${item.name}`)
+      })()
     },
-    [patchItem]
+    [reserve]
   )
 
   const handleMarkInUse = useCallback(
     (item: InventoryItem) => {
-      const next = inventoryMarkInUse(item)
-      if (!next) {
-        toast.error("No available units to mark in use.")
-        return
-      }
-      patchItem(next)
-      toast.success(`Marked 1× ${item.name} in use`)
+      void (async () => {
+        const r = await markInUse(item)
+        if (!r.ok) {
+          toast.error(r.message)
+          return
+        }
+        toast.success(`Marked 1× ${item.name} in use`)
+      })()
     },
-    [patchItem]
+    [markInUse]
   )
 
   const handleRelease = useCallback(
     (item: InventoryItem) => {
-      const next = inventoryRelease(item)
-      if (!next) {
-        toast.error("Nothing to release from in-use or reserved.")
-        return
-      }
-      patchItem(next)
-      toast.success(`Released 1 unit — ${item.name}`)
+      void (async () => {
+        const r = await release(item)
+        if (!r.ok) {
+          toast.error(r.message)
+          return
+        }
+        toast.success(`Released 1 unit — ${item.name}`)
+      })()
     },
-    [patchItem]
+    [release]
   )
 
   const handleUpdateTotal = useCallback(
     (item: InventoryItem, nextTotal: number) => {
-      const next = inventorySetTotal(item, nextTotal)
-      if (!next) {
-        toast.error(
-          `Total must be at least ${item.inUse + item.reserved} (in use + reserved).`
-        )
-        return
-      }
-      patchItem(next)
-      toast.success(`Updated total for ${item.name}`)
+      void (async () => {
+        const r = await setTotal(item, nextTotal)
+        if (!r.ok) {
+          toast.error(r.message)
+          return
+        }
+        toast.success(`Updated total for ${item.name}`)
+      })()
     },
-    [patchItem]
+    [setTotal]
   )
 
   return (
@@ -179,70 +179,85 @@ export function InventoryPage() {
         </div>
       </header>
 
+      {error ? (
+        <div
+          className="bg-destructive/10 text-destructive mx-auto mt-4 w-full max-w-7xl rounded-xl border border-red-200 px-4 py-3 text-sm"
+          role="alert"
+        >
+          {error}
+        </div>
+      ) : null}
+
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-8 px-4 py-6 sm:px-6 lg:py-8">
-        <InventorySummaryCards metrics={metrics} />
-
-        <InventoryFilters value={filters} onChange={setFilters} />
-
-        <section aria-labelledby="low-stock-heading">
-          <h2 id="low-stock-heading" className="sr-only">
-            Low stock alerts
-          </h2>
-          <LowStockPanel
-            items={items}
-            onSelect={(i) => setDetailItem(i)}
-          />
-        </section>
-
-        <section aria-labelledby="analytics-heading">
-          <h2 id="analytics-heading" className="sr-only">
-            Inventory analytics
-          </h2>
-          <InventoryAnalytics items={items} />
-        </section>
-
-        <section aria-labelledby="catalog-heading">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-            <h2
-              id="catalog-heading"
-              className="text-lg font-bold tracking-tight text-slate-900"
-            >
-              Equipment catalog
-            </h2>
-            <p className="text-muted-foreground text-sm font-medium">
-              {filtered.length} of {items.length} SKUs
-            </p>
+        {loading && items.length === 0 ? (
+          <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-3 py-24">
+            <Loader2 className="size-8 animate-spin" aria-hidden />
+            <p className="text-sm font-medium">Loading inventory…</p>
           </div>
+        ) : (
+          <>
+            <InventorySummaryCards metrics={metrics} />
 
-          <InventoryTable
-            items={filtered}
-            onOpenDetail={setDetailItem}
-            onReserve={handleReserve}
-            onMarkInUse={handleMarkInUse}
-            onRelease={handleRelease}
-          />
+            <InventoryFilters value={filters} onChange={setFilters} />
 
-          <div className="mt-4 grid grid-cols-1 gap-4 lg:hidden">
-            {filtered.map((item, i) => (
-              <InventoryCard
-                key={item.id}
-                item={item}
-                index={i}
-                onOpenDetail={setDetailItem}
+            <section aria-labelledby="low-stock-heading">
+              <h2 id="low-stock-heading" className="sr-only">
+                Low stock alerts
+              </h2>
+              <LowStockPanel items={items} onSelect={openDetail} />
+            </section>
+
+            <section aria-labelledby="analytics-heading">
+              <h2 id="analytics-heading" className="sr-only">
+                Inventory analytics
+              </h2>
+              <InventoryAnalytics items={items} />
+            </section>
+
+            <section aria-labelledby="catalog-heading">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                <h2
+                  id="catalog-heading"
+                  className="text-lg font-bold tracking-tight text-slate-900"
+                >
+                  Equipment catalog
+                </h2>
+                <p className="text-muted-foreground text-sm font-medium">
+                  {filtered.length} of {items.length} SKUs
+                </p>
+              </div>
+
+              <InventoryTable
+                items={filtered}
+                onOpenDetail={openDetail}
                 onReserve={handleReserve}
                 onMarkInUse={handleMarkInUse}
                 onRelease={handleRelease}
               />
-            ))}
-          </div>
-        </section>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 lg:hidden">
+                {filtered.map((item, i) => (
+                  <InventoryCard
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    onOpenDetail={openDetail}
+                    onReserve={handleReserve}
+                    onMarkInUse={handleMarkInUse}
+                    onRelease={handleRelease}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
 
       <InventoryModal
         item={detailItem}
         open={detailItem !== null}
         onOpenChange={(o) => {
-          if (!o) setDetailItem(null)
+          if (!o) setDetailId(null)
         }}
         onReserve={handleReserve}
         onMarkInUse={handleMarkInUse}

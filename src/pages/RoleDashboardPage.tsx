@@ -2,10 +2,9 @@ import { motion, useReducedMotion } from "framer-motion"
 import {
   ArrowRight,
   BedDouble,
-  Bell,
-  ClipboardList,
   Microscope,
   Package,
+  Settings,
   TrendingUp,
   UserRoundPlus,
 } from "lucide-react"
@@ -71,15 +70,29 @@ const NURSE_CARDS: DashCard[] = [
     accent: "text-teal-600",
   },
   {
-    to: "/app/alerts",
-    title: "Alerts",
-    desc: "Ward notifications and escalations.",
-    icon: Bell,
-    accent: "text-emerald-700",
+    to: "/app/inventory",
+    title: "Inventory",
+    desc: "Equipment availability and low-stock alerts.",
+    icon: Package,
+    accent: "text-orange-600",
   },
 ]
 
 const STAFF_CARDS: DashCard[] = [
+  {
+    to: "/app/bed-board",
+    title: "Bed Board",
+    desc: "Ward occupancy and bed status overview.",
+    icon: BedDouble,
+    accent: "text-emerald-600",
+  },
+  {
+    to: "/app/admissions",
+    title: "Admissions",
+    desc: "Patient flow, discharges, and arrivals.",
+    icon: UserRoundPlus,
+    accent: "text-teal-600",
+  },
   {
     to: "/app/inventory",
     title: "Inventory",
@@ -88,10 +101,10 @@ const STAFF_CARDS: DashCard[] = [
     accent: "text-orange-600",
   },
   {
-    to: "/app/alerts",
-    title: "Support tasks",
-    desc: "Operational alerts and follow-ups.",
-    icon: ClipboardList,
+    to: "/app/settings",
+    title: "Settings",
+    desc: "Workspace preferences and facility defaults.",
+    icon: Settings,
     accent: "text-amber-700",
   },
 ]
@@ -112,8 +125,8 @@ const ROLE_COPY: Record<
   },
   staff: {
     headline: "Logistics hub",
-    sub: "Track assets and respond to facility-level requests.",
-    grid: "sm:grid-cols-2 max-w-2xl",
+    sub: "Beds, patient flow, and assets — operations in one place.",
+    grid: "sm:grid-cols-2 max-w-3xl",
   },
 }
 

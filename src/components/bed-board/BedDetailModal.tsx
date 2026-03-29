@@ -1,18 +1,14 @@
+import type { ReactNode } from "react"
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import { X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import type { BedWithPatient } from "@/types/bed"
+import type { BedWithPatient, PatientRow } from "@/types/bed"
 
 import { STATUS_LABEL, TILE_STATUS_STYLES } from "./status-styles"
-
-type BedDetailModalProps = {
-  bed: BedWithPatient | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onEditStatus: (bed: BedWithPatient) => void
-}
 
 function formatDate(value: string | null) {
   if (!value) return "—"
@@ -27,6 +23,65 @@ function formatDate(value: string | null) {
   }
 }
 
+function patientDetailRows(patient: PatientRow) {
+  const rows: { label: string; value: ReactNode }[] = [
+    { label: "Name", value: patient.full_name },
+  ]
+  if (patient.patient_code) {
+    rows.push({ label: "Patient ID", value: patient.patient_code })
+  }
+  if (patient.gender) {
+    rows.push({
+      label: "Gender",
+      value: <span className="capitalize">{patient.gender}</span>,
+    })
+  }
+  if (patient.admission_date) {
+    rows.push({
+      label: "Admission date",
+      value: formatDate(patient.admission_date),
+    })
+  }
+  if (patient.condition_category) {
+    rows.push({ label: "Condition", value: patient.condition_category })
+  }
+  if (patient.doctor_name) {
+    rows.push({ label: "Assigned doctor", value: patient.doctor_name })
+  }
+  return rows
+}
+
+type BedDetailModalProps = {
+  bed: BedWithPatient | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onEditStatus: (bed: BedWithPatient) => void
+}
+
+function DetailRow({
+  label,
+  value,
+  isLast,
+}: {
+  label: string
+  value: ReactNode
+  isLast?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-start justify-between gap-6 py-2.5",
+        !isLast && "border-b border-slate-100"
+      )}
+    >
+      <span className="text-sm text-slate-500 shrink-0 pt-0.5">{label}</span>
+      <span className="text-base font-medium text-slate-900 text-right min-w-0 leading-snug">
+        {value}
+      </span>
+    </div>
+  )
+}
+
 export function BedDetailModal({
   bed,
   open,
@@ -34,70 +89,63 @@ export function BedDetailModal({
   onEditStatus,
 }: BedDetailModalProps) {
   const reduceMotion = useReducedMotion()
+  const [mounted, setMounted] = useState(false)
 
-  if (!bed) return null
+  useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
+  if (!bed || !mounted || !open) return null
 
   const styles = TILE_STATUS_STYLES[bed.status]
   const statusLabel = STATUS_LABEL[bed.status]
   const hasPatient = Boolean(bed.patient)
 
-  return (
-    <>
-      {/* Backdrop */}
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+      onClick={() => onOpenChange(false)}
+      role="presentation"
+    >
       <motion.div
-        initial={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
-        animate={{ opacity: open ? 1 : 0 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={() => onOpenChange(false)}
-        className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm",
-          !open && "pointer-events-none"
-        )}
-        aria-hidden
-      />
-
-      {/* Modal */}
-      <motion.div
-        initial={
-          reduceMotion
-            ? { opacity: 0 }
-            : { opacity: 0, scale: 0.95, y: 20 }
-        }
-        animate={open ? { opacity: 1, scale: 1, y: 0 } : {}}
-        exit={
-          reduceMotion
-            ? { opacity: 0 }
-            : { opacity: 0, scale: 0.95, y: 20 }
-        }
-        transition={{
-          duration: 0.3,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        className={cn(
-          "fixed inset-x-4 top-1/2 z-50 w-auto max-h-[85vh] max-w-md -translate-y-1/2 transform rounded-2xl border border-slate-200/80 bg-white shadow-2xl sm:left-1/2 sm:right-auto sm:w-full sm:-translate-x-1/2",
-          !open && "pointer-events-none"
-        )}
+        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_25px_50px_-12px_rgba(15,23,42,0.18)]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bed-detail-title"
       >
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex min-h-0 max-h-[min(90vh,calc(100dvh-2rem))] flex-col overflow-hidden">
           {/* Header */}
-          <div className={cn("relative p-6 border-b boundary-slate-200/60")}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <div className="shrink-0 border-b border-slate-100 px-8 pt-8 pb-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
+                <h2
+                  id="bed-detail-title"
+                  className="text-2xl font-bold tracking-tight text-slate-900"
+                >
                   {bed.code}
                 </h2>
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200/60 bg-slate-50 px-3 py-1.5">
+                <div
+                  className={cn(
+                    "inline-flex w-fit items-center gap-2 rounded-full px-3 py-1",
+                    styles.badgeSurface
+                  )}
+                >
                   <span
-                    className={cn("size-2.5 shrink-0 rounded-full", styles.dot)}
+                    className={cn("size-2 shrink-0 rounded-full", styles.dot)}
                     aria-hidden
                   />
-                  <span
-                    className={cn(
-                      "text-xs font-semibold tracking-wide uppercase",
-                      styles.accent
-                    )}
-                  >
+                  <span className="text-xs font-semibold uppercase tracking-wide">
                     {statusLabel}
                   </span>
                 </div>
@@ -106,129 +154,69 @@ export function BedDetailModal({
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => onOpenChange(false)}
-                className="shrink-0 text-muted-foreground hover:text-foreground"
+                className="size-9 shrink-0 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900"
               >
                 <X className="size-5" />
               </Button>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-            {/* Bed Status Section */}
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-8 py-6">
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                Bed Information
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Bed information
               </h3>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">Status</span>
-                <span className={"text-sm font-medium " + styles.accent}>
-                  {statusLabel}
-                </span>
+              <div>
+                <DetailRow
+                  label="Status"
+                  value={statusLabel}
+                  isLast={!bed.status_note}
+                />
+                {bed.status_note ? (
+                  <DetailRow label="Note" value={bed.status_note} isLast />
+                ) : null}
               </div>
-              {bed.status_note && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Note: {bed.status_note}
-                </p>
-              )}
             </div>
 
-            {/* Divider */}
-            {hasPatient && <div className="h-px bg-slate-200/60" />}
-
-            {/* Patient Section */}
             {hasPatient && bed.patient ? (
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                  Patient Information
+              <div className="mt-8">
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Patient information
                 </h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Name
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-foreground">
-                      {bed.patient.full_name}
-                    </p>
-                  </div>
-
-                  {bed.patient.patient_code && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Patient ID
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">
-                        {bed.patient.patient_code}
-                      </p>
-                    </div>
-                  )}
-
-                  {bed.patient.gender && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Gender
-                      </p>
-                      <p className="mt-1 text-sm text-foreground capitalize">
-                        {bed.patient.gender}
-                      </p>
-                    </div>
-                  )}
-
-                  {bed.patient.admission_date && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Admission Date
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">
-                        {formatDate(bed.patient.admission_date)}
-                      </p>
-                    </div>
-                  )}
-
-                  {bed.patient.condition_category && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Condition
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">
-                        {bed.patient.condition_category}
-                      </p>
-                    </div>
-                  )}
-
-                  {bed.patient.doctor_name && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Assigned Doctor
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">
-                        {bed.patient.doctor_name}
-                      </p>
-                    </div>
-                  )}
+                <div>
+                  {patientDetailRows(bed.patient).map((r, i, arr) => (
+                    <DetailRow
+                      key={r.label}
+                      label={r.label}
+                      value={r.value}
+                      isLast={i === arr.length - 1}
+                    />
+                  ))}
                 </div>
               </div>
             ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">No patient assigned</p>
+              <div className="mt-8 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-6 text-center">
+                <p className="text-sm text-slate-500">No patient assigned</p>
               </div>
             )}
           </div>
 
-          {/* Footer with Action Button */}
-          <div className="border-t border-slate-200/60 p-4 sm:p-6 bg-slate-50/50">
+          {/* Footer */}
+          <div className="shrink-0 border-t border-slate-100 bg-slate-50/50 px-8 pt-6 pb-8">
             <Button
               onClick={() => {
                 onEditStatus(bed)
                 onOpenChange(false)
               }}
-              className="w-full"
+              className="h-11 w-full rounded-xl text-base font-semibold shadow-sm"
             >
-              Update Bed Status
+              Update bed status
             </Button>
           </div>
         </div>
       </motion.div>
-    </>
+    </div>,
+    document.body
   )
 }
