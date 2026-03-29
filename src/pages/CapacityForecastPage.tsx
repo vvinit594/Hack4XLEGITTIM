@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import {
-  Activity,
-  Calendar,
-  History,
-  Info,
-  RefreshCw,
-  Server,
-} from "lucide-react"
+import { Calendar, History, Info, RefreshCw, Server } from "lucide-react"
 import { toast } from "sonner"
 
+import { BrandLogo } from "@/components/brand/BrandLogo"
 import { ForecastBadge } from "@/components/forecast/ForecastBadge"
 import { CapacityWidget } from "@/components/forecast/CapacityWidget"
 import { MetricCardsContainer } from "@/components/forecast/MetricCards"
@@ -48,26 +42,20 @@ export function CapacityForecastPage() {
 
   const [forecast, setForecast] = useState<ForecastResponse | null>(null)
   const [weekday, setWeekday] = useState<WeekdayImpact[]>([])
-  const [dataSource, setDataSource] = useState<"cached" | "run" | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const applyForecast = useCallback(
-    (f: ForecastResponse, source: "cached" | "run") => {
-      setForecast(f)
-      setDataSource(source)
-    },
-    []
-  )
+  const applyForecast = useCallback((f: ForecastResponse) => {
+    setForecast(f)
+  }, [])
 
   const loadInitial = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const { forecast: f, source, weekday: w } =
-        await loadForecastWithFallback(wardId)
-      applyForecast(f, source)
+      const { forecast: f, weekday: w } = await loadForecastWithFallback(wardId)
+      applyForecast(f)
       setWeekday(w)
     } catch (e) {
       const msg =
@@ -94,7 +82,7 @@ export function CapacityForecastPage() {
     const tick = () => {
       if (document.visibilityState !== "visible") return
       void getCachedForecast(wardId)
-        .then((f) => applyForecast(f, "cached"))
+        .then((f) => applyForecast(f))
         .catch(() => undefined)
     }
 
@@ -108,7 +96,7 @@ export function CapacityForecastPage() {
     try {
       const f = await runForecast(wardId)
       await saveForecast(wardId, f.predictions).catch(() => undefined)
-      applyForecast(f, "run")
+      applyForecast(f)
       const w = await getWeekdayImpact(wardId).catch(() => weekday)
       setWeekday(w)
       toast.success("Forecast recalculated and saved.")
@@ -161,7 +149,7 @@ export function CapacityForecastPage() {
 
   if (loading) {
     return (
-      <div className="relative flex min-h-svh flex-col overflow-hidden bg-[#FAFBFC]">
+      <div className="relative flex min-h-svh flex-col overflow-x-hidden bg-[#FAFBFC]">
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-10">
           <div className="border-primary size-10 animate-spin rounded-full border-2 border-t-transparent" />
           <p className="text-muted-foreground text-sm font-medium">
@@ -174,7 +162,7 @@ export function CapacityForecastPage() {
 
   if (error && !forecast) {
     return (
-      <div className="relative flex min-h-svh flex-col overflow-hidden bg-[#FAFBFC]">
+      <div className="relative flex min-h-svh flex-col overflow-x-hidden bg-[#FAFBFC]">
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-10 text-center">
           <p className="text-lg font-semibold text-slate-900">
             Forecast service unavailable
@@ -205,7 +193,7 @@ export function CapacityForecastPage() {
   }
 
   return (
-    <div className="relative flex min-h-svh flex-col overflow-hidden bg-[#FAFBFC]">
+    <div className="relative flex min-h-svh flex-col overflow-x-hidden bg-[#FAFBFC]">
       <div
         className="pointer-events-none absolute top-0 right-0 left-0 h-[400px] overflow-hidden"
         aria-hidden="true"
@@ -216,25 +204,13 @@ export function CapacityForecastPage() {
 
       <header className="relative z-10 p-6 pb-0 sm:p-10">
         <div className="mx-auto flex max-w-6xl flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="space-y-2">
-            <div className="mb-2 flex items-center gap-2.5">
-              <span className="flex size-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/20">
-                <Activity className="size-5" />
-              </span>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                Capacity Forecast
-              </h1>
-            </div>
-            <p className="text-muted-foreground max-w-lg text-lg leading-relaxed font-medium">
-              Live ward occupancy projection from BedPulse (RandomForest +
-              LangGraph). Ward{" "}
-              <span className="font-mono text-xs text-slate-600">{wardId}</span>
-              {dataSource ? (
-                <span className="text-muted-foreground/80 ml-1 text-sm">
-                  · {dataSource === "cached" ? "Cached data" : "Fresh run"}
-                </span>
-              ) : null}
-            </p>
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-2 shadow-md">
+              <BrandLogo size="sm" className="max-h-8 max-w-[120px]" />
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              Capacity Forecast
+            </h1>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -296,7 +272,7 @@ export function CapacityForecastPage() {
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 p-6 pt-8 sm:p-10">
+      <main className="relative z-10 p-6 pt-8 sm:p-10">
         <div className="mx-auto max-w-6xl">
           {error ? (
             <motion.div

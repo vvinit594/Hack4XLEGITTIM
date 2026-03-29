@@ -1,7 +1,8 @@
 import { motion, useReducedMotion } from "framer-motion"
-import { Activity, LogOut } from "lucide-react"
+import { LogOut } from "lucide-react"
 import { NavLink } from "react-router-dom"
 
+import { BrandLogo } from "@/components/brand/BrandLogo"
 import { Button } from "@/components/ui/button"
 import { useAuthRole } from "@/context/AuthRoleContext"
 import { sidebarNavForRole } from "@/lib/role-sidebar"
@@ -15,9 +16,7 @@ export function AppSidebar() {
   return (
     <aside className="border-border/80 bg-card flex h-svh w-[260px] shrink-0 flex-col border-r shadow-sm">
       <div className="border-border/60 flex items-center gap-2.5 border-b px-4 py-5">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/25">
-          <Activity className="size-5" aria-hidden />
-        </span>
+        <BrandLogo size="lg" className="max-h-10 max-w-[140px]" />
         <div className="min-w-0">
           <p className="text-foreground truncate text-sm font-bold tracking-tight">
             Hospi-Track

@@ -1,11 +1,9 @@
+import { useEffect, useRef } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Link } from "react-router-dom"
 
 import { useAuthRole } from "@/context/AuthRoleContext"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-
-import { HeroDashboardPreview } from "./HeroDashboardPreview"
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
@@ -14,121 +12,117 @@ function scrollTo(id: string) {
 export function HeroSection() {
   const reduceMotion = useReducedMotion()
   const { isAuthenticated, role, openRoleModal } = useAuthRole()
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el) return
+    if (reduceMotion) {
+      el.pause()
+      el.currentTime = 0
+    } else {
+      void el.play().catch(() => {
+        /* autoplay may be blocked; first frame still shows */
+      })
+    }
+  }, [reduceMotion])
 
   return (
     <section
       id="top"
-      className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-24 lg:pt-32 lg:pb-28"
+      className="relative flex min-h-[90vh] w-full items-center justify-center overflow-hidden pt-24 pb-20 text-center sm:pt-28 sm:pb-24"
     >
-      <div
-        className="pointer-events-none absolute inset-0 bg-[#F8FAFC]"
-        aria-hidden
-      />
-      <div
-        className="bg-primary/5 pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute top-20 -right-24 h-72 w-72 rounded-full bg-indigo-400/25 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl"
-        aria-hidden
-      />
+      <div className="absolute inset-0" aria-hidden>
+        <video
+          ref={videoRef}
+          className="absolute inset-0 size-full scale-105 object-cover object-center"
+          muted
+          loop
+          playsInline
+          autoPlay={!reduceMotion}
+          preload="auto"
+        >
+          <source src="/background.mp4" type="video/mp4" />
+          <source src="/background.webm" type="video/webm" />
+        </video>
+        {/* Light white veil — video stays visible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/28 via-white/14 to-white/22" />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 90% 70% at 50% 40%, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.12) 52%, rgba(255,255,255,0.04) 100%)",
+          }}
+        />
+      </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
-          <div>
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Badge
-                variant="secondary"
-                className="mb-5 rounded-full border border-indigo-200/80 bg-indigo-50/90 px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm"
-              >
-                Healthcare intelligence
-              </Badge>
-              <h1 className="text-foreground text-4xl leading-[1.08] font-bold tracking-tight sm:text-5xl lg:text-[3.25rem]">
-                Real-Time Hospital Ward Intelligence
-              </h1>
-              <p className="text-muted-foreground mt-5 max-w-xl text-lg leading-relaxed sm:text-xl">
-                Monitor bed occupancy, patient flow, and capacity forecasts —
-                all in one intelligent dashboard.
-              </p>
-            </motion.div>
+      <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-6">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col items-center"
+        >
+          <h1 className="font-playfair text-4xl leading-[1.15] font-semibold tracking-tight text-gray-900 [text-shadow:0_1px_3px_rgba(255,255,255,0.98),0_0_28px_rgba(255,255,255,0.65),0_2px_12px_rgba(255,255,255,0.45)] sm:text-5xl sm:leading-[1.12] md:text-6xl md:font-bold">
+            Real-Time Hospital <br />
+            Ward Intelligence
+          </h1>
+          <p className="font-playfair mt-6 max-w-xl text-lg leading-relaxed font-normal text-gray-900 [text-shadow:0_1px_2px_rgba(255,255,255,0.9),0_0_16px_rgba(255,255,255,0.35)] sm:text-xl">
+            Monitor bed occupancy, patient flow, and capacity forecasts — all
+            in one intelligent dashboard.
+          </p>
+        </motion.div>
 
-            <motion.div
-              className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4"
-              initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: 0.12,
-                duration: 0.5,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            >
-              <motion.div
-                whileHover={
-                  reduceMotion ? undefined : { scale: 1.03, y: -1 }
-                }
-                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 22 }}
-              >
-                {isAuthenticated && role ? (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-7 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition-shadow duration-300 ease-in-out hover:shadow-xl hover:shadow-indigo-500/35"
-                  >
-                    <Link to={`/${role}/dashboard`}>View dashboard</Link>
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 px-7 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition-shadow duration-300 ease-in-out hover:shadow-xl hover:shadow-indigo-500/35"
-                    onClick={openRoleModal}
-                  >
-                    View dashboard
-                  </Button>
-                )}
-              </motion.div>
-              <motion.div
-                whileHover={
-                  reduceMotion ? undefined : { scale: 1.02, y: -1 }
-                }
-                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 22 }}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="h-12 rounded-2xl border-slate-200/90 bg-white/80 px-7 text-base font-semibold shadow-sm backdrop-blur-sm transition-all duration-300 ease-in-out hover:border-indigo-200 hover:bg-white hover:shadow-md"
-                  onClick={() => scrollTo("cta")}
-                >
-                  Request demo
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
-
+        <motion.div
+          className="mt-8 flex flex-wrap items-center justify-center gap-4"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: 0.1,
+            duration: 0.5,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        >
           <motion.div
-            className="relative mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none"
-            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: 0.18,
-              duration: 0.55,
-              ease: [0.22, 1, 0.36, 1],
-            }}
+            whileHover={reduceMotion ? undefined : { scale: 1.02, y: -1 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 22 }}
           >
-            <HeroDashboardPreview />
+            {isAuthenticated && role ? (
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-xl bg-blue-600 px-6 text-base font-semibold text-white shadow-lg transition hover:bg-blue-700"
+              >
+                <Link to={`/${role}/dashboard`}>View dashboard</Link>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="lg"
+                className="h-12 rounded-xl bg-blue-600 px-6 text-base font-semibold text-white shadow-lg transition hover:bg-blue-700"
+                onClick={openRoleModal}
+              >
+                View dashboard
+              </Button>
+            )}
           </motion.div>
-        </div>
+          <motion.div
+            whileHover={reduceMotion ? undefined : { scale: 1.02, y: -1 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 22 }}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="h-12 rounded-xl border border-gray-300/90 bg-white/90 px-6 text-base font-semibold text-gray-900 shadow-md backdrop-blur-sm transition hover:bg-white"
+              onClick={() => scrollTo("cta")}
+            >
+              Request demo
+            </Button>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )

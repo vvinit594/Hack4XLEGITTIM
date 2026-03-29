@@ -1,6 +1,7 @@
 import { Link, Outlet, useParams } from "react-router-dom"
-import { Activity, LogOut } from "lucide-react"
+import { LogOut } from "lucide-react"
 
+import { BrandLogo } from "@/components/brand/BrandLogo"
 import { Button } from "@/components/ui/button"
 import { useAuthRole } from "@/context/AuthRoleContext"
 import { firstAppModuleForRole } from "@/lib/role-sidebar"
@@ -44,8 +45,8 @@ export function RoleLayout() {
       >
         <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 shadow-inner backdrop-blur-sm">
-              <Activity className="size-6" aria-hidden />
+            <span className="flex shrink-0 items-center justify-center rounded-2xl bg-white/95 px-2 py-1.5 shadow-inner">
+              <BrandLogo size="lg" className="max-h-10 max-w-[140px]" />
             </span>
             <div className="min-w-0">
               <p className="text-[11px] font-bold tracking-widest text-white/80 uppercase">

@@ -1,15 +1,12 @@
 import { useState, type ReactNode } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { AlertTriangle, Loader2, Wifi, WifiOff } from "lucide-react"
+import { Loader2, Wifi, WifiOff } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { usePatientFlowData } from "@/hooks/usePatientFlowData"
 import { NoAvailableBedsError } from "@/lib/patient-flow-actions"
-import {
-  formatFlowTime,
-  isDischargeEscalated,
-} from "@/lib/patient-flow-utils"
+import { formatFlowTime } from "@/lib/patient-flow-utils"
 import { cn } from "@/lib/utils"
 import type { AdmissionQueueItem, FlowPatient } from "@/types/patient-flow"
 
@@ -108,7 +105,6 @@ function PendingDischargeCard({
   busy: boolean
 }) {
   const reduceMotion = useReducedMotion()
-  const escalated = isDischargeEscalated(patient)
   return (
     <motion.div
       layout
@@ -125,15 +121,6 @@ function PendingDischargeCard({
       }
       className="border-border/80 bg-background rounded-2xl border p-4 shadow-sm"
     >
-      {escalated ? (
-        <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-          <span>
-            Escalation: discharge ordered over 2h — patient may still be in
-            bed.
-          </span>
-        </div>
-      ) : null}
       <p className="text-foreground font-semibold">{patient.full_name}</p>
       <p className="text-muted-foreground mt-1 text-sm">
         {patient.condition_category ?? "—"}

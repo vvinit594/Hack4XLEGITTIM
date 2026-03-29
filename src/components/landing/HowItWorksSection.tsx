@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion"
 import { Brain, RefreshCw, Stethoscope, Zap } from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard"
 import { cn } from "@/lib/utils"
 
 const steps = [
@@ -81,34 +81,30 @@ export function HowItWorksSection() {
                 }}
                 className="relative"
               >
-                <Card
-                  className={cn(
-                    "border-border/80 relative z-10 rounded-2xl border bg-[#F8FAFC] shadow-sm transition-all duration-300 ease-in-out",
-                    "hover:-translate-y-1 hover:border-indigo-200/90 hover:bg-white hover:shadow-md hover:shadow-indigo-500/10"
-                  )}
+                <AnimatedBorderCard
+                  className="relative z-10 h-full w-full min-w-0"
+                  innerClassName="flex flex-col gap-4 bg-[#F8FAFC] p-6 transition-colors duration-300 group-hover:bg-white sm:p-7"
                 >
-                  <CardContent className="flex flex-col gap-4 p-6 sm:p-7">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br shadow-inner",
-                          step.accent
-                        )}
-                      >
-                        <step.icon className="size-6" aria-hidden />
-                      </span>
-                      <span className="text-muted-foreground text-sm font-semibold">
-                        Step {i + 1}
-                      </span>
-                    </div>
-                    <h3 className="text-foreground text-lg font-semibold tracking-tight">
-                      {step.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {step.body}
-                    </p>
-                  </CardContent>
-                </Card>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        "flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br shadow-inner",
+                        step.accent
+                      )}
+                    >
+                      <step.icon className="size-6" aria-hidden />
+                    </span>
+                    <span className="text-muted-foreground text-sm font-semibold">
+                      Step {i + 1}
+                    </span>
+                  </div>
+                  <h3 className="text-foreground text-lg font-semibold tracking-tight">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {step.body}
+                  </p>
+                </AnimatedBorderCard>
               </motion.div>
             ))}
           </div>

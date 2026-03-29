@@ -1,6 +1,7 @@
-import { Activity, BarChart2 } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { BrandLogo } from "@/components/brand/BrandLogo"
+import { LandingBrandTitle } from "@/components/landing/LandingBrandTitle"
 import { useAuthRole } from "@/context/AuthRoleContext"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -41,16 +42,17 @@ export function LandingNav({ className }: { className?: string }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <a
           href="#top"
-          className="text-foreground flex items-center gap-2 font-semibold tracking-tight"
+          className="text-foreground flex min-w-0 items-center gap-2.5 sm:gap-3"
           onClick={(e) => {
             e.preventDefault()
             window.scrollTo({ top: 0, behavior: "smooth" })
           }}
         >
-          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/25">
-            <Activity className="size-4" aria-hidden />
-          </span>
-          <span className="hidden sm:inline">Hospi-Track</span>
+          <BrandLogo
+            size="md"
+            className="max-h-9 max-w-[100px] shrink-0 object-contain object-left sm:max-h-10 sm:max-w-[120px]"
+          />
+          <LandingBrandTitle size="md" showTagline className="min-w-0" />
         </a>
         <nav
           className="text-muted-foreground hidden items-center gap-1 text-sm font-medium md:flex"
@@ -87,13 +89,6 @@ export function LandingNav({ className }: { className?: string }) {
           )}
         </nav>
         <div className="flex shrink-0 items-center gap-2">
-          <Link
-            to="/forecast"
-            className="hidden items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-sm font-medium text-indigo-300 transition hover:bg-indigo-500/20 hover:text-indigo-200 sm:flex"
-          >
-            <BarChart2 className="size-3.5" aria-hidden />
-            AI Forecast
-          </Link>
           <Button
             type="button"
             variant="ghost"

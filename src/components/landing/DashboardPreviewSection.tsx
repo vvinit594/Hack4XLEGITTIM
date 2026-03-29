@@ -3,12 +3,12 @@ import { motion, useReducedMotion } from "framer-motion"
 
 import { Badge } from "@/components/ui/badge"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard"
 import { cn } from "@/lib/utils"
 
 type BedState = "occupied" | "available" | "cleaning" | "iso" | "alert"
@@ -111,7 +111,10 @@ export function DashboardPreviewSection() {
               </div>
             ) : (
               <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-                <Card className="rounded-2xl border-slate-200/90 bg-[#FAFBFC] shadow-sm ring-0">
+                <AnimatedBorderCard
+                  className="h-full w-full min-w-0"
+                  innerClassName="flex min-h-0 flex-col gap-4 bg-[#FAFBFC] p-0 py-4"
+                >
                   <CardHeader>
                     <CardTitle className="text-base font-semibold">
                       Live bed grid
@@ -171,10 +174,13 @@ export function DashboardPreviewSection() {
                       </li>
                     </ul>
                   </CardContent>
-                </Card>
+                </AnimatedBorderCard>
 
                 <div className="grid gap-6">
-                  <Card className="rounded-2xl border-slate-200/90 shadow-sm ring-0">
+                  <AnimatedBorderCard
+                    className="h-full w-full min-w-0"
+                    innerClassName="flex min-h-0 flex-col gap-4 bg-card p-0 py-4"
+                  >
                     <CardHeader>
                       <CardTitle className="text-base font-semibold">
                         Occupancy trend
@@ -212,9 +218,12 @@ export function DashboardPreviewSection() {
                         })}
                       </div>
                     </CardContent>
-                  </Card>
+                  </AnimatedBorderCard>
 
-                  <Card className="rounded-2xl border-slate-200/90 shadow-sm ring-0">
+                  <AnimatedBorderCard
+                    className="h-full w-full min-w-0"
+                    innerClassName="flex min-h-0 flex-col gap-4 bg-card p-0 py-4"
+                  >
                     <CardHeader>
                       <CardTitle className="text-base font-semibold">
                         Status distribution
@@ -309,7 +318,7 @@ export function DashboardPreviewSection() {
                         </li>
                       </ul>
                     </CardContent>
-                  </Card>
+                  </AnimatedBorderCard>
                 </div>
               </div>
             )}

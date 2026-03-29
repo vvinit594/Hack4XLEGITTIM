@@ -8,11 +8,10 @@ import {
 } from "lucide-react"
 
 import {
-  Card,
-  CardContent,
   CardDescription,
   CardTitle,
 } from "@/components/ui/card"
+import { AnimatedBorderCard } from "@/components/ui/AnimatedBorderCard"
 import { cn } from "@/lib/utils"
 
 const features = [
@@ -95,50 +94,46 @@ export function FeaturesSection() {
         </motion.div>
 
         <motion.div
-          className="mt-12 grid grid-cols-1 items-stretch justify-items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8"
+          className="mt-12 grid grid-cols-1 items-stretch justify-items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-6 lg:gap-8"
           variants={reduceMotion ? undefined : container}
           initial={reduceMotion ? false : "hidden"}
           whileInView={reduceMotion ? undefined : "show"}
           viewport={{ once: true, margin: "-60px" }}
         >
-          {features.map((f) => (
+          {features.map((f, i) => (
             <motion.div
               key={f.title}
               variants={reduceMotion ? undefined : item}
-              whileHover={
-                reduceMotion
-                  ? undefined
-                  : { y: -6, transition: { duration: 0.3, ease: "easeOut" } }
-              }
-              className="flex h-full min-h-0"
+              className={cn(
+                "flex h-full min-h-0",
+                i < 3 && "lg:col-span-2",
+                i === 3 && "lg:col-span-2 lg:col-start-2",
+                i === 4 && "lg:col-span-2 lg:col-start-4"
+              )}
             >
-              <Card
-                className={cn(
-                  "border-border/80 h-full w-full min-w-0 rounded-2xl border bg-white shadow-sm transition-all duration-300 ease-in-out",
-                  "hover:border-indigo-200/80 hover:shadow-lg hover:shadow-indigo-500/10"
-                )}
+              <AnimatedBorderCard
+                className="h-full w-full min-w-0"
+                innerClassName="flex h-full min-h-0 flex-col gap-4 bg-white px-4 pt-2 pb-6"
               >
-                <CardContent className="flex h-full flex-col gap-4 pt-2 pb-6">
-                  <motion.span
-                    className={cn(
-                      "flex size-11 shrink-0 items-center justify-center rounded-xl",
-                      f.iconWrap
-                    )}
-                    whileHover={
-                      reduceMotion ? undefined : { scale: 1.08, rotate: -3 }
-                    }
-                    transition={{ type: "spring", stiffness: 400, damping: 18 }}
-                  >
-                    <f.icon className="size-5" aria-hidden />
-                  </motion.span>
-                  <CardTitle className="text-lg font-semibold tracking-tight">
-                    {f.title}
-                  </CardTitle>
-                  <CardDescription className="text-base leading-relaxed">
-                    {f.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+                <motion.span
+                  className={cn(
+                    "flex size-11 shrink-0 items-center justify-center rounded-xl",
+                    f.iconWrap
+                  )}
+                  whileHover={
+                    reduceMotion ? undefined : { scale: 1.08, rotate: -3 }
+                  }
+                  transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                >
+                  <f.icon className="size-5" aria-hidden />
+                </motion.span>
+                <CardTitle className="text-lg font-semibold tracking-tight">
+                  {f.title}
+                </CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  {f.description}
+                </CardDescription>
+              </AnimatedBorderCard>
             </motion.div>
           ))}
         </motion.div>

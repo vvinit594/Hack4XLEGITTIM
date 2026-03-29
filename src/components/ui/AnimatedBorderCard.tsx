@@ -50,7 +50,7 @@ export function AnimatedBorderCard({
     >
       <div
         className={cn(
-          "pointer-events-none absolute inset-0 overflow-hidden",
+          "pointer-events-none absolute inset-0 overflow-hidden [container-type:size]",
           r.clip
         )}
         aria-hidden
@@ -58,7 +58,7 @@ export function AnimatedBorderCard({
         <div className="absolute inset-0 flex items-center justify-center">
           <div
             className={cn(
-              "aspect-square w-[min(220%,42rem)] shrink-0 rounded-full",
+              "aspect-square size-[min(max(240cqw,240cqh),56rem)] shrink-0 rounded-full",
               "bg-[conic-gradient(from_0deg,#3b82f6,#6366f1,#a855f7,#ec4899,#3b82f6)]",
               "opacity-[0.72] blur-[2.5px] transition-all duration-300",
               "group-hover:opacity-[0.88] group-hover:blur-[3px]",

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
-import { Activity, ArrowLeft, Loader2, Wifi, WifiOff } from "lucide-react"
+import { ArrowLeft, Loader2, Wifi, WifiOff } from "lucide-react"
 
+import { BrandLogo } from "@/components/brand/BrandLogo"
 import { BedDetailModal } from "@/components/bed-board/BedDetailModal"
 import { BedGrid } from "@/components/bed-board/BedGrid"
 import { ParticipantListPanel } from "@/components/bed-board/ParticipantListPanel"
@@ -225,8 +226,8 @@ export function BedBoardPage() {
               </Button>
             ) : null}
             <div className="flex min-w-0 items-center gap-2">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/25">
-                <Activity className="size-4" aria-hidden />
+              <span className="flex h-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 bg-white px-1.5 shadow-sm">
+                <BrandLogo size="xs" className="max-h-7 max-w-[88px]" />
               </span>
               <div className="min-w-0">
                 <h1 className="text-foreground truncate text-lg font-bold tracking-tight sm:text-xl">
