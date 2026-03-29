@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Loader2, Wifi, WifiOff } from "lucide-react"
+import { Loader2, Wifi } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -18,12 +18,7 @@ function ConnectionChip({
   state: string
 }) {
   if (isMock) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
-        <WifiOff className="size-3.5" aria-hidden />
-        Demo mode
-      </span>
-    )
+    return null
   }
   if (state === "reconnecting") {
     return (

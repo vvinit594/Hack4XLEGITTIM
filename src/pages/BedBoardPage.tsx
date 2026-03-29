@@ -21,12 +21,7 @@ function ConnectionPill({
   state: string
 }) {
   if (isMock) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
-        <WifiOff className="size-3.5" aria-hidden />
-        Demo data (set VITE_API_URL or Supabase for live)
-      </span>
-    )
+    return null
   }
   if (state === "reconnecting") {
     return (
