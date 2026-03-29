@@ -10,7 +10,7 @@ import { RoleLayout } from "@/components/layout/RoleLayout"
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage"
 import { AdminWardDetailPage } from "@/pages/AdminWardDetailPage"
 import { BedBoardPage } from "@/pages/BedBoardPage"
-import { CapacityForecastPage } from "@/pages/CapacityForecastPage"
+import ForecastDashboard from "@/pages/ForecastDashboard"
 import { HomePage } from "@/pages/HomePage"
 import { InventoryPage } from "@/pages/InventoryPage"
 import { OutbreakPage } from "@/pages/OutbreakPage"
@@ -59,7 +59,7 @@ export default function App() {
             <Route path="admissions" element={<PatientFlowPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="outbreak" element={<OutbreakPage />} />
-            <Route path="forecast" element={<CapacityForecastPage />} />
+            <Route path="forecast" element={<ForecastDashboard />} />
             <Route path="admin">
               <Route index element={<AdminDashboardPage />} />
               <Route path="ward/:id" element={<AdminWardDetailPage />} />

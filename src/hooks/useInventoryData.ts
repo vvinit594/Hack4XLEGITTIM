@@ -1,49 +1,93 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import {
-  inventoryMarkInUse,
-  inventoryRelease,
-  inventoryReserve,
-  inventorySetTotal,
-} from "@/lib/inventory-actions"
-import { getHospiApiBase } from "@/lib/hospi-api"
+import { getSupabase } from "@/lib/supabase"
 import { INVENTORY_SEED } from "@/lib/inventory-seed"
-import type { InventoryItem } from "@/types/inventory"
+import { normalizeItem, type InventoryItem } from "@/types/inventory"
 
 type ActionResult = { ok: true } | { ok: false; message: string }
 
+type EquipmentRow = {
+  id: string
+  sku: string
+  name: string
+  category: string
+  ward: string
+  total: number
+  available: number
+  in_use: number
+  reserved: number
+  low_stock_threshold: number
+  last_audit: string | null
+  daily_use_avg: number
+}
+
+function rowToItem(row: EquipmentRow): InventoryItem {
+  return normalizeItem({
+    id: row.id,
+    sku: row.sku,
+    name: row.name,
+    category: row.category as InventoryItem["category"],
+    ward: row.ward as InventoryItem["ward"],
+    total: row.total,
+    available: row.available,
+    inUse: row.in_use,
+    reserved: row.reserved,
+    lowStockThreshold: row.low_stock_threshold,
+    lastAudit: row.last_audit ?? "",
+    dailyUseAvg: row.daily_use_avg,
+  })
+}
+
 export function useInventoryData() {
-  const apiEnabled = useMemo(() => getHospiApiBase() !== undefined, [])
+  const client = useMemo(() => getSupabase(), [])
+  const isMock = client === null
 
   const [items, setItems] = useState<InventoryItem[]>(() =>
-    apiEnabled ? [] : [...INVENTORY_SEED]
+    isMock ? [...INVENTORY_SEED] : []
   )
-  const [loading, setLoading] = useState(apiEnabled)
+  const [loading, setLoading] = useState(!isMock)
   const [error, setError] = useState<string | null>(null)
 
+  const channelRef = useRef<RealtimeChannel | null>(null)
+
   const load = useCallback(async () => {
-    if (!apiEnabled) {
+    if (!client) {
       setLoading(false)
       return
     }
-    const base = getHospiApiBase()!
-    const prefix = base === "" ? "" : base
-    try {
-      const res = await fetch(`${prefix}/api/inventory`)
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`)
-      const data = (await res.json()) as { items: InventoryItem[] }
-      setItems(data.items ?? [])
-      setError(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load inventory")
-    } finally {
-      setLoading(false)
+    const { data, error: fetchErr } = await client
+      .from("equipment_items")
+      .select("*")
+      .order("sku")
+    setLoading(false)
+    if (fetchErr) {
+      setError(fetchErr.message)
+      return
     }
-  }, [apiEnabled])
+    setItems((data as EquipmentRow[]).map(rowToItem))
+    setError(null)
+  }, [client])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!client) return
+    const ch = client
+      .channel(`equipment:${crypto.randomUUID()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "equipment_items" }, () => {
+        void load()
+      })
+      .subscribe()
+    channelRef.current = ch
+    return () => {
+      ch.unsubscribe()
+      channelRef.current = null
+    }
+  }, [client, load])
 
   const patchItem = useCallback((next: InventoryItem) => {
     setItems((prev) => prev.map((i) => (i.id === next.id ? next : i)))
@@ -51,148 +95,109 @@ export function useInventoryData() {
 
   const reserve = useCallback(
     async (item: InventoryItem): Promise<ActionResult> => {
-      if (!apiEnabled) {
-        const next = inventoryReserve(item)
-        if (!next) {
-          return { ok: false, message: "No available units to reserve." }
-        }
-        patchItem(next)
+      if (!client) {
+        if (item.available < 1) return { ok: false, message: "No available units to reserve." }
+        patchItem({ ...item, available: item.available - 1, reserved: item.reserved + 1 })
         return { ok: true }
       }
-      const base = getHospiApiBase()!
-      const prefix = base === "" ? "" : base
-      const res = await fetch(`${prefix}/api/inventory/${item.id}/actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reserve" }),
-      })
-      if (!res.ok) {
-        const text = await res.text()
-        let message = text
-        try {
-          const j = JSON.parse(text) as { error?: string }
-          if (j.error) message = j.error
-        } catch {
-          /* use text */
-        }
-        return { ok: false, message: message || res.statusText }
-      }
-      const data = (await res.json()) as { item: InventoryItem }
-      patchItem(data.item)
+      if (item.available < 1) return { ok: false, message: "No available units to reserve." }
+      const { data, error: err } = await client
+        .from("equipment_items")
+        .update({ available: item.available - 1, reserved: item.reserved + 1 })
+        .eq("id", item.id)
+        .select()
+        .single()
+      if (err) return { ok: false, message: err.message }
+      patchItem(rowToItem(data as EquipmentRow))
       return { ok: true }
     },
-    [apiEnabled, patchItem]
+    [client, patchItem]
   )
 
   const markInUse = useCallback(
     async (item: InventoryItem): Promise<ActionResult> => {
-      if (!apiEnabled) {
-        const next = inventoryMarkInUse(item)
-        if (!next) {
-          return { ok: false, message: "No available units to mark in use." }
-        }
-        patchItem(next)
+      if (!client) {
+        if (item.available < 1) return { ok: false, message: "No available units to mark in use." }
+        patchItem({ ...item, available: item.available - 1, inUse: item.inUse + 1 })
         return { ok: true }
       }
-      const base = getHospiApiBase()!
-      const prefix = base === "" ? "" : base
-      const res = await fetch(`${prefix}/api/inventory/${item.id}/actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "mark_in_use" }),
-      })
-      if (!res.ok) {
-        const text = await res.text()
-        let message = text
-        try {
-          const j = JSON.parse(text) as { error?: string }
-          if (j.error) message = j.error
-        } catch {
-          /* use text */
-        }
-        return { ok: false, message: message || res.statusText }
-      }
-      const data = (await res.json()) as { item: InventoryItem }
-      patchItem(data.item)
+      if (item.available < 1) return { ok: false, message: "No available units to mark in use." }
+      const { data, error: err } = await client
+        .from("equipment_items")
+        .update({ available: item.available - 1, in_use: item.inUse + 1 })
+        .eq("id", item.id)
+        .select()
+        .single()
+      if (err) return { ok: false, message: err.message }
+      patchItem(rowToItem(data as EquipmentRow))
       return { ok: true }
     },
-    [apiEnabled, patchItem]
+    [client, patchItem]
   )
 
   const release = useCallback(
     async (item: InventoryItem): Promise<ActionResult> => {
-      if (!apiEnabled) {
-        const next = inventoryRelease(item)
-        if (!next) {
-          return {
-            ok: false,
-            message: "Nothing to release from in-use or reserved.",
-          }
+      if (!client) {
+        if (item.inUse > 0) {
+          patchItem({ ...item, inUse: item.inUse - 1, available: item.available + 1 })
+          return { ok: true }
         }
-        patchItem(next)
+        if (item.reserved > 0) {
+          patchItem({ ...item, reserved: item.reserved - 1, available: item.available + 1 })
+          return { ok: true }
+        }
+        return { ok: false, message: "Nothing to release from in-use or reserved." }
+      }
+      if (item.inUse > 0) {
+        const { data, error: err } = await client
+          .from("equipment_items")
+          .update({ in_use: item.inUse - 1, available: item.available + 1 })
+          .eq("id", item.id)
+          .select()
+          .single()
+        if (err) return { ok: false, message: err.message }
+        patchItem(rowToItem(data as EquipmentRow))
         return { ok: true }
       }
-      const base = getHospiApiBase()!
-      const prefix = base === "" ? "" : base
-      const res = await fetch(`${prefix}/api/inventory/${item.id}/actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "release" }),
-      })
-      if (!res.ok) {
-        const text = await res.text()
-        let message = text
-        try {
-          const j = JSON.parse(text) as { error?: string }
-          if (j.error) message = j.error
-        } catch {
-          /* use text */
-        }
-        return { ok: false, message: message || res.statusText }
+      if (item.reserved > 0) {
+        const { data, error: err } = await client
+          .from("equipment_items")
+          .update({ reserved: item.reserved - 1, available: item.available + 1 })
+          .eq("id", item.id)
+          .select()
+          .single()
+        if (err) return { ok: false, message: err.message }
+        patchItem(rowToItem(data as EquipmentRow))
+        return { ok: true }
       }
-      const data = (await res.json()) as { item: InventoryItem }
-      patchItem(data.item)
-      return { ok: true }
+      return { ok: false, message: "Nothing to release from in-use or reserved." }
     },
-    [apiEnabled, patchItem]
+    [client, patchItem]
   )
 
   const setTotal = useCallback(
     async (item: InventoryItem, nextTotal: number): Promise<ActionResult> => {
-      if (!apiEnabled) {
-        const next = inventorySetTotal(item, nextTotal)
-        if (!next) {
-          return {
-            ok: false,
-            message: `Total must be at least ${item.inUse + item.reserved} (in use + reserved).`,
-          }
-        }
-        patchItem(next)
+      if (!Number.isFinite(nextTotal) || nextTotal < 1)
+        return { ok: false, message: "Invalid total." }
+      const assigned = item.inUse + item.reserved
+      if (nextTotal < assigned)
+        return { ok: false, message: `Total must be at least ${assigned} (in use + reserved).` }
+
+      if (!client) {
+        patchItem({ ...item, total: nextTotal, available: nextTotal - assigned })
         return { ok: true }
       }
-      const base = getHospiApiBase()!
-      const prefix = base === "" ? "" : base
-      const res = await fetch(`${prefix}/api/inventory/${item.id}/total`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ total: nextTotal }),
-      })
-      if (!res.ok) {
-        const text = await res.text()
-        let message = text
-        try {
-          const j = JSON.parse(text) as { error?: string }
-          if (j.error) message = j.error
-        } catch {
-          /* use text */
-        }
-        return { ok: false, message: message || res.statusText }
-      }
-      const data = (await res.json()) as { item: InventoryItem }
-      patchItem(data.item)
+      const { data, error: err } = await client
+        .from("equipment_items")
+        .update({ total: nextTotal, available: nextTotal - assigned })
+        .eq("id", item.id)
+        .select()
+        .single()
+      if (err) return { ok: false, message: err.message }
+      patchItem(rowToItem(data as EquipmentRow))
       return { ok: true }
     },
-    [apiEnabled, patchItem]
+    [client, patchItem]
   )
 
   return {

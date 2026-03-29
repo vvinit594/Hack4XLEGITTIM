@@ -15,22 +15,22 @@ import { DiseaseChart } from "@/components/outbreak/DiseaseChart"
 import { DiseaseMonitoringCards } from "@/components/outbreak/DiseaseMonitoringCards"
 import { NotificationModal } from "@/components/outbreak/NotificationModal"
 import { OutbreakBanner } from "@/components/outbreak/OutbreakBanner"
-import {
-  AUTHORITY_SEED,
-  OUTBREAK_ALERT,
-  OUTBREAK_CHART,
-  OUTBREAK_CLUSTERS,
-  OUTBREAK_METRICS,
-  buildDefaultOutreachMessage,
-} from "@/lib/outbreak-seed"
+import { useOutbreakData } from "@/hooks/useOutbreakData"
+import { buildDefaultOutreachMessage } from "@/lib/outbreak-seed"
 import type { AuthorityContact } from "@/types/outbreak"
 
 export function OutbreakPage() {
   const reduceMotion = useReducedMotion()
-  const [alert] = useState(OUTBREAK_ALERT)
-  const [authorities, setAuthorities] = useState<AuthorityContact[]>(() => [
-    ...AUTHORITY_SEED,
-  ])
+  const {
+    clusters,
+    chart,
+    alert,
+    metrics,
+    authorities,
+    loading,
+    markSent,
+  } = useOutbreakData()
+
   const [modalOpen, setModalOpen] = useState(false)
   const [targetAuthority, setTargetAuthority] =
     useState<AuthorityContact | null>(null)
@@ -43,13 +43,6 @@ export function OutbreakPage() {
   const openModalFor = useCallback((a: AuthorityContact) => {
     setTargetAuthority(a)
     setModalOpen(true)
-  }, [])
-
-  const markSent = useCallback((id: string, label: string) => {
-    setAuthorities((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "sent" } : x))
-    )
-    toast.success(`Notification sent to ${label}`)
   }, [])
 
   const handleNotify = useCallback(
@@ -69,7 +62,7 @@ export function OutbreakPage() {
   )
 
   const handleModalSend = useCallback(
-    (payload: {
+    async (payload: {
       authorityId: string
       message: string
       disease: string
@@ -78,7 +71,8 @@ export function OutbreakPage() {
     }) => {
       const a = authorities.find((x) => x.id === payload.authorityId)
       const label = a?.shortName ?? "authority"
-      markSent(payload.authorityId, label)
+      await markSent(payload.authorityId)
+      toast.success(`Notification sent to ${label}`)
     },
     [authorities, markSent]
   )
@@ -137,60 +131,65 @@ export function OutbreakPage() {
       </header>
 
       <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-8 px-4 py-6 sm:px-6 lg:py-8">
-        <OutbreakBanner alert={alert} />
-
-        <section aria-labelledby="monitor-heading">
-          <h2 id="monitor-heading" className="sr-only">
-            Disease monitoring
-          </h2>
-          <DiseaseMonitoringCards metrics={OUTBREAK_METRICS} />
-        </section>
-
-        <section aria-labelledby="trend-heading">
-          <h2 id="trend-heading" className="sr-only">
-            Trends
-          </h2>
-          <DiseaseChart data={OUTBREAK_CHART} />
-        </section>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight text-slate-900">
-              Case clusters
-            </h2>
-            <ClusterTable clusters={OUTBREAK_CLUSTERS} />
+        {loading ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
+            <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-red-600" />
+            <p className="text-sm font-medium">Loading outbreak data…</p>
           </div>
-          <DetectionLogicPanel
-            threshold={alert.threshold}
-            windowLabel={alert.windowLabel}
-          />
-        </div>
+        ) : (
+          <>
+            <OutbreakBanner alert={alert} />
 
-        <section aria-labelledby="auth-heading">
-          <div className="mb-4">
-            <h2
-              id="auth-heading"
-              className="text-foreground text-lg font-bold tracking-tight text-slate-900"
-            >
-              Authorities &amp; statutory notification
-            </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              One-click routing to municipal, food safety, district, and
-              optional IHR channels.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {authorities.map((a, i) => (
-              <AuthorityCard
-                key={a.id}
-                authority={a}
-                index={i}
-                onNotify={handleNotify}
-                onSendReport={handleSendReport}
+            <section aria-labelledby="monitor-heading">
+              <h2 id="monitor-heading" className="sr-only">Disease monitoring</h2>
+              <DiseaseMonitoringCards metrics={metrics} />
+            </section>
+
+            <section aria-labelledby="trend-heading">
+              <h2 id="trend-heading" className="sr-only">Trends</h2>
+              <DiseaseChart data={chart} />
+            </section>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight text-slate-900">
+                  Case clusters
+                </h2>
+                <ClusterTable clusters={clusters} />
+              </div>
+              <DetectionLogicPanel
+                threshold={alert.threshold}
+                windowLabel={alert.windowLabel}
               />
-            ))}
-          </div>
-        </section>
+            </div>
+
+            <section aria-labelledby="auth-heading">
+              <div className="mb-4">
+                <h2
+                  id="auth-heading"
+                  className="text-foreground text-lg font-bold tracking-tight text-slate-900"
+                >
+                  Authorities &amp; statutory notification
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  One-click routing to municipal, food safety, district, and
+                  optional IHR channels.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {authorities.map((a, i) => (
+                  <AuthorityCard
+                    key={a.id}
+                    authority={a}
+                    index={i}
+                    onNotify={handleNotify}
+                    onSendReport={handleSendReport}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
 
       <NotificationModal

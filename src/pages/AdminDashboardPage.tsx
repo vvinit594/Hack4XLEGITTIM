@@ -1,9 +1,9 @@
 import { lazy, Suspense } from "react"
-import { ShieldCheck, LayoutGrid, AlertTriangle, Layers, Activity } from "lucide-react"
+import { ShieldCheck, LayoutGrid, AlertTriangle, Layers, Activity, Loader2 } from "lucide-react"
 
 import { StatBar } from "@/components/admin/StatCards"
-import { WardCard, type WardSummary } from "@/components/admin/WardCard"
-import { ADMIN_MOCK_WARDS } from "@/lib/admin-dashboard-data"
+import { WardCard } from "@/components/admin/WardCard"
+import { useAdminDashboard } from "@/hooks/useAdminDashboard"
 
 const AdminAnalyticsCharts = lazy(() =>
   import("@/components/admin/AdminAnalyticsCharts").then((m) => ({
@@ -28,35 +28,37 @@ function AnalyticsFallback() {
 }
 
 export function AdminDashboardPage() {
-  const mockWards: WardSummary[] = ADMIN_MOCK_WARDS
+  const { wards, campusStats, loading, error } = useAdminDashboard()
 
   const stats = [
     {
       title: "Total Wards",
-      value: 7,
+      value: wards.length || 6,
       icon: <Layers className="size-5" />,
       gradient: "bg-indigo-600 shadow-indigo-200",
     },
     {
       title: "Total Beds",
-      value: 245,
+      value: campusStats.total || 0,
       icon: <LayoutGrid className="size-5" />,
       gradient: "bg-blue-600 shadow-blue-200",
     },
     {
       title: "Occupied Beds",
-      value: 184,
+      value: campusStats.occupied || 0,
       icon: <Activity className="size-5" />,
-      trend: "+12%",
+      trend: campusStats.total > 0
+        ? `${Math.round((campusStats.occupied / campusStats.total) * 100)}%`
+        : "—",
       trendPositive: false,
       gradient: "bg-emerald-600 shadow-emerald-200",
     },
     {
       title: "Critical Wards",
-      value: 2,
+      value: wards.filter((w) => w.isCritical).length,
       icon: <AlertTriangle className="size-5" />,
       gradient: "bg-red-600 shadow-red-200",
-      trend: "High Rush",
+      trend: wards.filter((w) => w.isCritical).length > 0 ? "High Rush" : "Normal",
       trendPositive: false,
     },
   ]
@@ -83,6 +85,12 @@ export function AdminDashboardPage() {
 
       <main className="relative z-10 flex-1 p-6 pt-10 sm:p-10">
         <div className="mx-auto max-w-7xl">
+          {error && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {error}
+            </div>
+          )}
+
           <StatBar stats={stats} />
 
           <Suspense fallback={<AnalyticsFallback />}>
@@ -107,11 +115,18 @@ export function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {mockWards.map((ward, i) => (
-              <WardCard key={ward.id} ward={ward} index={i} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-3 text-slate-500">
+              <Loader2 className="size-8 animate-spin text-indigo-500" />
+              <p className="text-sm font-medium">Loading ward data…</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {wards.map((ward, i) => (
+                <WardCard key={ward.id} ward={ward} index={i} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
